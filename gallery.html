@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<title>갤러리 — 단톡방</title>
+<meta name="theme-color" content="#1D3B5C">
+<!-- 💬 단톡방 갤러리 (gallery.html?r=방&u=사람[&a=앨범])
+     사진마다 블록 크기(작게 1x1 · 가로 2x1 · 세로 1x2 · 크게 2x2)를 고르고, 꾹 눌러 끌어서 자리를 바꾸면
+     화면이 빈칸을 메우며 블록처럼 쌓습니다(grid dense). 나와 같은 방 사람만 볼 수 있습니다.
+     서버: 18_dantok_gallery.sql · 2026-11-17 -->
+<link rel="stylesheet" href="dt.css?v=20261117c">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="dt.js?v=20261117c"></script>
+<style>
+.hd{ position:sticky; top:0; z-index:20; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:8px; }
+.hd a, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:19px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; padding:0; }
+.hd .tt{ flex:1; min-width:0; } .hd .tt b{ display:block; font-size:17.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hd .tt small{ opacity:.85; font-size:13px; }
+.w{ padding-top:14px; }
+.albums{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+.alb{ display:flex; flex-direction:column; gap:6px; text-decoration:none; color:var(--ink); cursor:pointer; border:none; background:none; padding:0; text-align:left; font:inherit; }
+.alb .cv{ aspect-ratio:1/1; border-radius:16px; background:var(--tint); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:34px; color:var(--sub); }
+.alb .cv img{ width:100%; height:100%; object-fit:cover; }
+.alb b{ font-size:15.5px; } .alb small{ color:var(--sub); font-size:13px; }
+.alb.new .cv{ border:2px dashed var(--line); background:transparent; }
+.tools{ display:flex; gap:8px; flex-wrap:wrap; }
+.tools .btn{ flex:1; min-width:130px; padding:11px; font-size:15px; }
+.grid{ display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:var(--cell, 84px); grid-auto-flow:dense; gap:4px; }
+.grid .ph{ position:relative; border-radius:10px; overflow:hidden; background:var(--tint); cursor:pointer; }
+.grid .ph img{ width:100%; height:100%; object-fit:cover; display:block; -webkit-user-drag:none; user-select:none; -webkit-touch-callout:none; }
+.grid .ph.s2x1{ grid-column:span 2; } .grid .ph.s1x2{ grid-row:span 2; } .grid .ph.s2x2{ grid-column:span 2; grid-row:span 2; }
+.grid .ph .cap{ position:absolute; left:0; right:0; bottom:0; padding:14px 8px 5px; font-size:12px; font-weight:700; color:#fff; background:linear-gradient(transparent, rgba(0,0,0,.6)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grid.edit .ph{ outline:2px dashed var(--sun); outline-offset:-2px; }
+.grid.edit .ph::after{ content:attr(data-span); position:absolute; top:5px; right:5px; background:rgba(0,0,0,.55); color:#fff; font-size:11px; font-weight:800; border-radius:8px; padding:1px 6px; }
+.grid .ghost{ opacity:.35; }
+.grid .chosen{ transform:scale(1.03); box-shadow:0 8px 24px rgba(0,0,0,.25); }
+.editbar{ background:var(--warnbg); color:var(--warn); border-radius:12px; padding:9px 12px; font-size:14px; font-weight:700; }
+.spans{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+.spans button{ border:1.5px solid var(--line); background:var(--bg); color:var(--ink); border-radius:12px; padding:10px 4px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.spans button.on{ border-color:var(--sky); background:var(--tint); }
+.spans i{ display:grid; grid-template-columns:repeat(2, 14px); grid-template-rows:repeat(2, 14px); gap:2px; }
+.spans i u{ background:var(--line); border-radius:3px; } .spans i u.f{ background:var(--sky); }
+.empty{ text-align:center; color:var(--sub); padding:30px 10px; }
+.view{ position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.view img{ max-width:100%; max-height:84vh; }
+.view .vc{ color:#fff; padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); font-size:15px; text-align:center; }
+.view .vb{ position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(env(safe-area-inset-right, 0px) + 10px); }
+.view .vb button{ height:44px; min-width:44px; border-radius:22px; border:none; background:rgba(255,255,255,.16); color:#fff; font-size:20px; cursor:pointer; }
+.view .nav{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:26px; border-radius:12px; cursor:pointer; }
+.view .nav.l{ left:8px; } .view .nav.r{ right:8px; }
+</style>
+</head>
+<body>
+<header class="hd">
+  <a id="back" href="./" aria-label="뒤로">‹</a>
+  <div class="tt"><b id="title">갤러리</b><small id="sub"></small></div>
+</header>
+<div class="w" id="main"><p class="hint">불러오는 중…</p></div>
+<input type="file" id="fPh" accept="image/*" multiple hidden>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+var $ = DT.$, esc = DT.esc, Q = new URLSearchParams(location.search);
+var ROOM = Q.get('r'), USER = Q.get('u'), ALBUM = Q.get('a'), ME = null, G = null, A = null, PH = [], EDIT = false, URLS = {}, sortable = null;
+$('back').href = ALBUM ? 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(USER) : (ROOM ? 'room.html?r=' + encodeURIComponent(ROOM) : './');
+
+async function sign(paths){
+  var need = paths.filter(function(p){ return p && !URLS[p]; });
+  if (need.length) { try { var r = await DT.sb.storage.from('dantok').createSignedUrls(need, 3600); (r.data || []).forEach(function(x){ if (x.signedUrl) URLS[x.path] = x.signedUrl; }); } catch (e) {} }
+}
+function cell(){ var g = document.querySelector('.grid'); if (g) g.style.setProperty('--cell', Math.floor((g.clientWidth - 12) / 4) + 'px'); }
+window.addEventListener('resize', cell);
+
+/* ---------- 앨범 목록 ---------- */
+async function albums(){
+  var r = await DT.rpc('dt_gal_user', { p_room: ROOM, p_user: USER });
+  if (!r.ok) { $('main').innerHTML = '<p class="empty">' + esc(DT.errText(r.error)) + '</p>'; return; }
+  G = r; $('title').textContent = r.mine ? '내 갤러리' : (r.nick || '') + '님의 갤러리';
+  $('sub').textContent = r.mine ? r.count + ' / ' + r.limit + '장 · 나와 같은 방 사람만 볼 수 있어요' : '앨범 ' + r.albums.length + '개';
+  await sign(r.albums.map(function(a){ return a.cover; }));
+  var h = r.albums.map(function(a){
+    return '<button class="alb" type="button" data-a="' + a.id + '"><span class="cv">' + (a.cover && URLS[a.cover] ? '<img alt="" src="' + esc(URLS[a.cover]) + '">' : '🖼') + '</span><b>' + esc(a.title) + '</b><small>' + a.n + '장 · ' + (a.scope === 'room' ? '🔒 ' + esc(a.room_name || '한 방') + '만' : '내 모든 방') + '</small></button>';
+  }).join('');
+  if (r.mine) h += '<button class="alb new" type="button" id="newAlb"><span class="cv">＋</span><b>새 앨범</b><small>여행 · 가족 · 모임</small></button>';
+  $('main').innerHTML = (r.albums.length || r.mine ? '<div class="albums">' + h + '</div>' : '<p class="empty">아직 앨범이 없어요.</p>');
+  document.querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ location.href = 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(USER) + '&a=' + b.getAttribute('data-a'); }; });
+  if ($('newAlb')) $('newAlb').onclick = function(){ albumSheet(null); };
+}
+function albumSheet(a){
+  var s = DT.sheet('<h3>' + (a ? '앨범 설정' : '＋ 새 앨범') + '</h3><label>앨범 이름<input id="aT" maxlength="30" placeholder="예) 제주 여행 · 손주 사진"></label>' +
+    '<span class="sec" style="font-size:13.5px;font-weight:800;color:var(--sub)">누가 볼 수 있나요?</span>' +
+    '<label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:15px"><input type="radio" name="sc" value="all" style="width:20px;height:20px">내가 있는 모든 방 사람</label>' +
+    '<label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:15px"><input type="radio" name="sc" value="room" style="width:20px;height:20px">이 방 사람만 🔒</label>' +
+    '<p class="err" id="aE" hidden></p><button class="btn" type="button" id="aGo">' + (a ? '저장' : '만들기') + '</button>' +
+    (a ? '<button class="btn red" type="button" id="aDel">앨범 지우기</button>' : ''));
+  $('aT').value = a ? a.title : ''; (document.querySelector('input[name=sc][value="' + (a ? a.scope : 'all') + '"]') || {}).checked = true;
+  $('aGo').onclick = async function(){
+    var sc = (document.querySelector('input[name=sc]:checked') || {}).value || 'all';
+    var r = await DT.rpc('dt_album_save', { p_id: a ? a.id : null, p_title: $('aT').value, p_scope: sc, p_room: ROOM });
+    if (!r.ok) { $('aE').textContent = r.error === 'too_many_albums' ? '앨범은 30개까지 만들 수 있어요.' : DT.errText(r.error); $('aE').hidden = false; return; }
+    s.close();
+    if (a) { load(); } else location.href = 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(USER) + '&a=' + r.id;
+  };
+  if ($('aDel')) { var armed = false; $('aDel').onclick = async function(){
+    if (!armed) { armed = true; this.textContent = '한 번 더 누르면 사진까지 모두 지워요'; return; }
+    var r = await DT.rpc('dt_album_del', { p_album: a.id }); if (!r.ok) return DT.toast(DT.errText(r.error));
+    if (r.paths && r.paths.length) DT.sb.storage.from('dantok').remove(r.paths).catch(function(){});
+    location.href = $('back').href;
+  }; }
+}
+
+/* ---------- 앨범 안: 블록 쌓기 ---------- */
+async function album(){
+  var r = await DT.rpc('dt_gal_album', { p_album: ALBUM });
+  if (!r.ok) { $('main').innerHTML = '<p class="empty">' + esc(DT.errText(r.error)) + '</p>'; return; }
+  A = r.album; PH = r.photos;
+  $('title').textContent = A.title; $('sub').textContent = PH.length + '장' + (A.scope === 'room' ? ' · 🔒 이 방 사람만' : '');
+  await sign(PH.map(function(p){ return p.thumb; }));
+  var tools = A.mine ? '<div class="tools"><button class="btn sun" type="button" id="bAdd">＋ 사진 올리기</button><button class="btn ' + (EDIT ? '' : 'g') + '" type="button" id="bEdit">' + (EDIT ? '✓ 꾸미기 끝' : '🧱 블록 꾸미기') + '</button><button class="btn g" type="button" id="bSet">⚙ 앨범 설정</button></div>' +
+    (EDIT ? '<div class="editbar">사진을 누르면 블록 크기를 고르고, 꾹 눌러 끌면 자리를 옮겨요. 빈칸은 알아서 메워져요.</div>' : '') : '';
+  $('main').innerHTML = tools + (PH.length ? '<div class="grid' + (EDIT ? ' edit' : '') + '" id="grid">' + PH.map(function(p){
+    return '<div class="ph s' + p.span + '" data-id="' + p.id + '" data-span="' + ({ '1x1': '작게', '2x1': '가로', '1x2': '세로', '2x2': '크게' }[p.span]) + '"><img alt="" loading="lazy" src="' + esc(URLS[p.thumb] || '') + '">' + (p.caption && !EDIT ? '<span class="cap">' + esc(p.caption) + '</span>' : '') + '</div>';
+  }).join('') + '</div>' : '<p class="empty">' + (A.mine ? '＋ 사진 올리기로 첫 사진을 넣어 보세요.' : '아직 사진이 없어요.') + '</p>');
+  cell();
+  if (A.mine) {
+    $('bAdd').onclick = function(){ $('fPh').click(); };
+    $('bEdit').onclick = function(){ EDIT = !EDIT; album(); };
+    $('bSet').onclick = function(){ albumSheet(A); };
+  }
+  document.querySelectorAll('.grid .ph').forEach(function(el){ el.onclick = function(){ var id = +el.getAttribute('data-id'); if (EDIT) photoSheet(PH.find(function(p){ return p.id === id; })); else viewer(id); }; });
+  if (sortable) { sortable.destroy(); sortable = null; }
+  if (EDIT && $('grid') && window.Sortable) {
+    sortable = Sortable.create($('grid'), { animation: 180, delay: 180, delayOnTouchOnly: true, ghostClass: 'ghost', chosenClass: 'chosen',
+      onEnd: async function(){
+        var ids = Array.from($('grid').children).map(function(x){ return x.getAttribute('data-id'); });
+        PH.sort(function(a, b){ return ids.indexOf(String(a.id)) - ids.indexOf(String(b.id)); });
+        var r = await DT.rpc('dt_photo_order', { p_album: ALBUM, p_ids: ids }); if (!r.ok) DT.toast(DT.errText(r.error));
+      } });
+  }
+}
+var SPANS = [['1x1', '작게', [1, 0, 0, 0]], ['2x1', '가로', [1, 1, 0, 0]], ['1x2', '세로', [1, 0, 1, 0]], ['2x2', '크게', [1, 1, 1, 1]]];
+function photoSheet(p){
+  var s = DT.sheet('<h3>블록 크기</h3><div class="spans">' + SPANS.map(function(x){ return '<button type="button" data-s="' + x[0] + '" class="' + (p.span === x[0] ? 'on' : '') + '"><i>' + x[2].map(function(f){ return '<u class="' + (f ? 'f' : '') + '"></u>'; }).join('') + '</i>' + x[1] + '</button>'; }).join('') + '</div>' +
+    '<label>한 줄 설명<input id="pC" maxlength="100" placeholder="예) 성산일출봉에서"></label>' +
+    '<div class="row"><button class="btn" type="button" id="pGo">저장</button><button class="btn red" type="button" id="pDel">지우기</button></div>');
+  var span = p.span; $('pC').value = p.caption || '';
+  s.el.querySelectorAll('[data-s]').forEach(function(b){ b.onclick = async function(){
+    span = b.getAttribute('data-s'); s.el.querySelectorAll('[data-s]').forEach(function(x){ x.classList.toggle('on', x === b); });
+    var r = await DT.rpc('dt_photo_set', { p_id: p.id, p_span: span, p_caption: $('pC').value }); if (!r.ok) return DT.toast(DT.errText(r.error));
+    p.span = span; var el = document.querySelector('.ph[data-id="' + p.id + '"]'); if (el) { el.className = 'ph s' + span; el.setAttribute('data-span', { '1x1': '작게', '2x1': '가로', '1x2': '세로', '2x2': '크게' }[span]); }
+  }; });
+  $('pGo').onclick = async function(){ var r = await DT.rpc('dt_photo_set', { p_id: p.id, p_span: span, p_caption: $('pC').value }); if (!r.ok) return DT.toast(DT.errText(r.error)); p.caption = $('pC').value.trim(); s.close(); };
+  var armed = false;
+  $('pDel').onclick = async function(){
+    if (!armed) { armed = true; this.textContent = '한 번 더'; return; }
+    var r = await DT.rpc('dt_photo_del', { p_id: p.id }); if (!r.ok) return DT.toast(DT.errText(r.error));
+    DT.sb.storage.from('dantok').remove(r.paths).catch(function(){}); s.close(); album();
+  };
+}
+function viewer(id){
+  var i = PH.findIndex(function(p){ return p.id === id; }); if (i < 0) return;
+  var v = document.createElement('div'); v.className = 'view';
+  async function show(){ var p = PH[i]; await sign([p.path]); v.innerHTML = '<img alt="" src="' + esc(URLS[p.path] || URLS[p.thumb] || '') + '"><div class="vc">' + esc(p.caption || '') + '</div><div class="vb"><button type="button" data-v="x" aria-label="닫기">✕</button></div>' + (i > 0 ? '<button class="nav l" type="button" data-v="l">‹</button>' : '') + (i < PH.length - 1 ? '<button class="nav r" type="button" data-v="r">›</button>' : ''); }
+  v.onclick = function(e){ var a = e.target.getAttribute('data-v'); if (a === 'l') { i--; show(); } else if (a === 'r') { i++; show(); } else if (a === 'x' || e.target === v) v.remove(); };
+  var x0 = null; v.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive: true });
+  v.addEventListener('touchend', function(e){ if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null; if (dx > 60 && i > 0) { i--; show(); } else if (dx < -60 && i < PH.length - 1) { i++; show(); } }, { passive: true });
+  document.body.appendChild(v); show();
+}
+
+/* ---------- 사진 올리기: 화면용(긴 쪽 1600) + 작은 사진(400) ---------- */
+function resize(file, max, q){
+  return new Promise(function(res, rej){
+    var img = new Image(), u = URL.createObjectURL(file);
+    img.onload = function(){
+      var k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+      c.toBlob(function(b){ b ? res({ blob: b, w: img.width, h: img.height }) : rej('path'); }, 'image/jpeg', q);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(u); rej('path'); };
+    img.src = u;
+  });
+}
+$('fPh').onchange = async function(){
+  var fs = Array.from(this.files).slice(0, 30); this.value = ''; if (!fs.length) return;
+  var ok = 0;
+  for (var i = 0; i < fs.length; i++) {
+    DT.toast('사진 올리는 중 ' + (i + 1) + ' / ' + fs.length);
+    try {
+      var big = await resize(fs[i], 1600, 0.85), small = await resize(fs[i], 400, 0.8), key = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      var pa = 'av/' + ME + '/g-' + key + '.jpg', pt = 'av/' + ME + '/t-' + key + '.jpg';
+      var u1 = await DT.sb.storage.from('dantok').upload(pa, big.blob, { contentType: 'image/jpeg' }); if (u1.error) throw u1.error;
+      var u2 = await DT.sb.storage.from('dantok').upload(pt, small.blob, { contentType: 'image/jpeg' }); if (u2.error) throw u2.error;
+      var r = await DT.rpc('dt_photo_add', { p_album: ALBUM, p_path: pa, p_thumb: pt, p_w: big.w, p_h: big.h, p_size: big.blob.size + small.blob.size, p_caption: null });
+      if (!r.ok) { DT.sb.storage.from('dantok').remove([pa, pt]).catch(function(){}); throw r.error; }
+      ok++;
+    } catch (e) { DT.toast(e === 'gal_full' ? '갤러리는 200장까지예요. 저장권으로 늘릴 수 있어요.' : DT.errText(e)); break; }
+  }
+  if (ok) DT.toast(ok + '장을 올렸어요.');
+  album();
+};
+DT.ERR.gal_full = '갤러리는 200장까지예요.';
+
+function load(){ return ALBUM ? album() : albums(); }
+(async function(){
+  try { var u = await DT.ready(); ME = u.id; if (!USER) USER = ME; await load(); }
+  catch (e) { $('main').innerHTML = '<p class="empty">' + esc(DT.errText(e)) + '</p>'; }
+})();
+})();
+</script>
+</body>
+</html>
