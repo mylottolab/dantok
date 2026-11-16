@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>단톡 — 곧 문을 엽니다</title>
+<meta name="description" content="번호 없이 모이고, 안부까지 보이는 단톡방. 위브앱솔루션이 준비하고 있습니다.">
+<meta name="theme-color" content="#1D3B5C">
+<!-- 2026-11-17 dantok.kr 자리 잡기용 첫 화면. 앱 이름이 정해지면 바꿉니다. -->
+<script>try{var _t=localStorage.getItem("dg_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<style>
+:root{ --bg:#F3F5F8; --card:#fff; --ink:#15243A; --sub:#55657A; --line:#DDE3EA; --navy:#1D3B5C; --sky:#3E7CB1; --sun:#F2A541; color-scheme:light; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0F1620; --card:#18222F; --ink:#E7EDF4; --sub:#9FB0C3; --line:#2A3746; color-scheme:dark; } }
+:root[data-theme="dark"]{ --bg:#0F1620; --card:#18222F; --ink:#E7EDF4; --sub:#9FB0C3; --line:#2A3746; color-scheme:dark; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif; line-height:1.65; word-break:keep-all; }
+.w{ max-width:600px; min-height:100vh; margin:0 auto; padding:max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left)); display:flex; flex-direction:column; gap:16px; }
+.logo{ font-weight:900; font-size:20px; display:flex; align-items:center; gap:8px; }
+.logo i{ width:32px; height:32px; border-radius:10px; background:var(--navy); position:relative; display:inline-block; }
+.logo i::after{ content:""; position:absolute; left:8px; top:9px; width:16px; height:11px; border-radius:6px; background:var(--sun); }
+.hero{ background:linear-gradient(135deg,var(--navy),var(--sky)); color:#fff; border-radius:24px; padding:30px 22px; display:flex; flex-direction:column; gap:10px; margin-top:auto; }
+.hero h1{ margin:0; font-size:28px; line-height:1.3; text-wrap:balance; } .hero p{ margin:0; opacity:.93; }
+.tag{ align-self:flex-start; background:var(--sun); color:#3A2600; font-weight:800; font-size:12.5px; border-radius:20px; padding:2px 10px; }
+.card{ background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:16px; display:grid; gap:10px; }
+.card p{ margin:0; color:var(--sub); font-size:15px; } .card b{ color:var(--ink); }
+.foot{ margin-top:auto; text-align:center; font-size:12.5px; color:var(--sub); line-height:1.8; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="logo"><i></i>단톡</div>
+  <section class="hero">
+    <span class="tag">준비 중</span>
+    <h1>번호 없이 모이고,<br>안부까지 보이는 단톡방</h1>
+    <p>곧 문을 엽니다.</p>
+  </section>
+  <section class="card">
+    <p><b>번호 없이</b> — 전화번호 · 아이디 없이 초대 링크와 QR로 모입니다.</p>
+    <p><b>바로 통화</b> — 단톡 중에 번호를 몰라도 한 사람에게 바로 전화합니다.</p>
+    <p><b>안부까지</b> — 가족방에서 부모님 휴대폰 소식이 오래 없으면 알려 드립니다.</p>
+  </section>
+  <p class="foot">위브앱솔루션 · 대표 이미화 · 사업자등록번호 206-08-71754 · 통신판매업신고 2022-수원권선-1701<br>경기도 수원시 권선구 수성로47 10동 501호 · weapps.kr@gmail.com</p>
+</div>
+</body>
+</html>
