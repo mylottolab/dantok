@@ -13,10 +13,10 @@
 <link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-<script src="dt.js?v=20261117d"></script>
+<script src="dt.js?v=20261117e"></script>
 <script src="aliascall_store.js?v=20261117"></script>
 <script src="aliascall_web_pay.js?v=20261117"></script>
-<script src="dt_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117e"></script>
 <style>
 .hd{ position:sticky; top:0; z-index:20; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:8px; }
 .hd a, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:19px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; padding:0; }
@@ -92,6 +92,7 @@ async function albums(){
   if (r.mine) h += '<button class="alb new" type="button" id="newAlb"><span class="cv">＋</span><b>새 앨범</b><small>여행 · 가족 · 모임</small></button>';
   $('main').innerHTML = (r.mine ? planBox() : '') + (r.albums.length || r.mine ? '<div class="albums">' + h + '</div>' : '<p class="empty">아직 앨범이 없어요.</p>');
   if ($('bPlan')) $('bPlan').onclick = function(){ plans(); };
+  if (r.mine) { var kb = document.createElement('section'); kb.className = 'card'; kb.hidden = true; kb.style.cssText = 'border-color:var(--sun);border-width:2px;margin-bottom:12px'; $('main').insertBefore(kb, $('main').firstChild); DT.keepBanner(kb, true); var a0 = null; try { a0 = localStorage.getItem('dt_keep_ask'); localStorage.removeItem('dt_keep_ask'); } catch (e) {} if (a0) DT.ready().then(function(u){ if (!u.email) DT.keepSheet(); }); }
   document.querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ location.href = 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(USER) + '&a=' + b.getAttribute('data-a'); }; });
   if ($('newAlb')) $('newAlb').onclick = function(){ albumSheet(null); };
 }

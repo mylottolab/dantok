@@ -16,10 +16,10 @@
 <link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="dt.js?v=20261117d"></script>
+<script src="dt.js?v=20261117e"></script>
 <script src="aliascall_store.js?v=20261117"></script>
 <script src="aliascall_web_pay.js?v=20261117"></script>
-<script src="dt_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117e"></script>
 <style>
 html,body{ height:100%; }
 body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
@@ -681,6 +681,8 @@ function menu(){
 
 function gal(u){ if (u) location.href = 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(u); }
 
+/* 웹 결제를 마치고 돌아왔는데 아직 아이디가 없으면 → 아이디 정하기 권하기 */
+function keepAsk(){ var a = null; try { a = localStorage.getItem('dt_keep_ask'); localStorage.removeItem('dt_keep_ask'); } catch (e) {} if (a) DT.ready().then(function(u){ if (!u.email) DT.keepSheet(); }); }
 function quotaFull(){
   if (R.owner) DT.planSheet('💾 방 저장 공간이 다 찼어요', '지금 ' + DT.size(R.used_bytes) + ' / ' + DT.size(R.quota_bytes) + '. 저장 공간을 늘리면 사진 · 동영상을 계속 올릴 수 있어요. 안 쓰는 큰 동영상을 지워도 공간이 생겨요.', ['dantok_room_10g'], ROOM, function(){ loadRoom(); });
   else DT.toast('방 저장 공간이 다 찼어요. 방장에게 저장 공간을 늘려 달라고 말씀해 주세요.');
@@ -730,7 +732,7 @@ function square(file, n){
 
 /* ---------- 시작 ---------- */
 (async function(){
-  try { if (await loadRoom()) { await first(); listen(); startPoll(); } }
+  try { if (await loadRoom()) { await first(); listen(); startPoll(); keepAsk(); } }
   catch (e) { $('inner').innerHTML = '<p class="sys">' + esc(DT.errText(e)) + '</p>'; }
 })();
 })();

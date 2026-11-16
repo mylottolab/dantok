@@ -84,7 +84,7 @@
      새 휴대폰에서 같은 아이디로 들어오면 내 방 · 갤러리 · 이용권이 그대로 따라옵니다. */
   var KEEP_DOMAIN = '@dantok.guest.aliascall.internal';
   function idOk(v){ return /^[a-z0-9_]{4,20}$/.test(v); }
-  async function keepSheet(){
+  async function keepSheet(after){
     var u = await ready(), anon = u.is_anonymous !== false && !u.email;
     if (!anon) {
       var id = String(u.email || '').split('@')[0];
@@ -105,7 +105,7 @@
       if (r.error) return err(/already|registered|exists/i.test(r.error.message) ? '이미 있는 아이디예요. 다른 아이디로 정해 주세요.' : '정하지 못했어요. 잠시 뒤에 다시 해 주세요.');
       var u2 = (await sb.auth.getUser()).data.user;
       if (!u2 || !u2.email) return err('정하지 못했어요. 잠시 뒤에 다시 해 주세요.');
-      s.close(); toast('아이디 ' + id + '로 지켜 두었어요.');
+      s.close(); toast('아이디 ' + id + '로 지켜 두었어요. 꼭 적어 두세요.'); if (after) after();
     };
   }
   /* 새 휴대폰에서: 아이디 · 비밀번호로 내 방 가져오기 */
@@ -120,6 +120,22 @@
       readyP = null; s.close(); toast('가져왔어요!'); if (done) done();
     };
   }
+  /* 📲 아직 아이디를 정하지 않은 사람에게 미리 알리는 띠 (나중에 → 7일 동안 숨김) */
+  async function keepBanner(box, force){
+    if (!box) return;
+    try {
+      var u = await ready();
+      if (u.email) { box.hidden = true; return; }
+      var later = 0; try { later = +localStorage.getItem('dt_keep_later') || 0; } catch (e) {}
+      if (!force && Date.now() - later < 7 * 864e5) { box.hidden = true; return; }
+      box.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start"><span style="font-size:24px">📲</span><div style="flex:1;min-width:0"><b>휴대폰을 바꿀 예정이세요?</b>' +
+        '<p class="hint" style="margin:2px 0 0">지금은 내 방이 이 휴대폰에만 기억돼요. 아이디 · 비밀번호를 정해 두면 휴대폰을 바꾸거나 앱을 지워도 내 방 · 갤러리 · 산 이용권이 그대로 와요.</p></div></div>' +
+        '<div class="row"><button class="btn sun" type="button" data-k="go" style="padding:11px">지금 정해 두기</button><button class="btn g" type="button" data-k="later" style="padding:11px">나중에</button></div>';
+      box.hidden = false;
+      box.querySelector('[data-k=go]').onclick = function(){ keepSheet(function(){ box.hidden = true; }); };
+      box.querySelector('[data-k=later]').onclick = function(){ try { localStorage.setItem('dt_keep_later', String(Date.now())); } catch (e) {} box.hidden = true; };
+    } catch (e) { box.hidden = true; }
+  }
   window.DT = { sb: sb, URL0: URL0, $: $, esc: esc, toast: toast, errText: errText, ERR: ERR, ready: ready, rpc: rpc, av: av, initial: initial,
-                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl, keepSheet: keepSheet, restoreSheet: restoreSheet };
+                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl, keepSheet: keepSheet, restoreSheet: restoreSheet, keepBanner: keepBanner };
 })();

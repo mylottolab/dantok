@@ -27,7 +27,7 @@
   document.getElementById('t').textContent = ok ? '결제가 끝났어요' : '결제를 마치지 못했어요';
   document.getElementById('m').textContent = ok ? (names[q.get('sku')] || '고맙습니다!') : (q.get('msg') || '다시 시도해 주세요.');
   document.getElementById('go').href = back;
-  if (ok) setTimeout(function(){ location.replace(back); }, 2500);
+  if (ok) { try { localStorage.setItem('dt_keep_ask', '1'); } catch (e) {} setTimeout(function(){ location.replace(back); }, 2500); }
 })();
 </script>
 </body>

@@ -13,7 +13,12 @@
   var BACK = 'dt_pay_back', onDone = null;
   function finish(r){
     r = r || {};
-    if (r.ok) { DT.toast('결제가 끝났어요. 고맙습니다!'); if (onDone) onDone(r); return; }
+    if (r.ok) {
+      DT.toast('결제가 끝났어요. 고맙습니다!'); if (onDone) onDone(r);
+      /* 산 이용권은 이 휴대폰 계정에 붙으니, 아직 아이디가 없으면 바로 정해 두자고 권합니다 */
+      DT.ready().then(function(u){ if (!u.email) setTimeout(function(){ DT.keepSheet(); }, 1200); });
+      return;
+    }
     if (r.canceled) return DT.toast('결제를 취소했어요.');
     if (r.pending) return DT.toast('결제가 아직 끝나지 않았어요. 끝나면 자동으로 적용돼요.');
     var why = String(r.error || '');

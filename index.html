@@ -11,10 +11,10 @@
      서버는 가림 프로젝트(15_dantok_rooms.sql). 2026-11-17 1단계 문자방. -->
 <link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="dt.js?v=20261117d"></script>
+<script src="dt.js?v=20261117e"></script>
 <script src="aliascall_store.js?v=20261117"></script>
 <script src="aliascall_web_pay.js?v=20261117"></script>
-<script src="dt_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117e"></script>
 <style>
 .hero{ background:linear-gradient(135deg,var(--navy),var(--sky)); color:#fff; border-radius:22px; padding:22px 20px; display:flex; flex-direction:column; gap:8px; }
 .hero h1{ margin:0; font-size:24px; line-height:1.3; text-wrap:balance; } .hero p{ margin:0; opacity:.93; font-size:15px; }
@@ -45,6 +45,8 @@
     <h1>번호 없는 모임,<br>단톡방</h1>
     <p>내 전화번호를 알리지 않고 모입니다. 초대 코드 하나면 끝.</p>
   </section>
+
+  <section class="card" id="keep" hidden style="border-color:var(--sun);border-width:2px"></section>
 
   <section class="card" id="mine" hidden>
     <h2>내 방</h2>
@@ -83,6 +85,7 @@ async function loadRooms(){
   var list;
   try { list = await DT.rpc('dt_my'); } catch (e) { $('mine').hidden = false; $('rooms').innerHTML = '<p class="err">' + esc(DT.errText(e)) + '</p>'; return; }
   var joining = !$('join').hidden; $('mine').hidden = !list.length; $('hero').hidden = !!list.length || joining; $('intro').hidden = list.length > 0 || joining;
+  if (list.length) DT.keepBanner($('keep'));
   $('rooms').innerHTML = list.map(function(r){
     var l = r.last || {}, pv = l.kind === 'system' ? (l.body || '') : l.kind === 'photo' ? '📷 사진' : l.kind === 'video' ? '🎬 동영상' : l.kind === 'audio' ? '🎵 음원' : l.kind === 'voice' ? '🎤 음성 메시지' : l.kind === 'file' ? '📎 파일' : (l.body == null ? '지워진 글' : l.body);
     if (l.nick && l.kind !== 'system') pv = l.nick + ': ' + pv;
