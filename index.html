@@ -9,9 +9,12 @@
 <meta name="theme-color" content="#1D3B5C">
 <!-- 💬 단톡방 첫 화면: 내 방 · 방 만들기 · 초대 코드로 들어가기. ?j=초대코드 로 오면 바로 들어가기 카드.
      서버는 가림 프로젝트(15_dantok_rooms.sql). 2026-11-17 1단계 문자방. -->
-<link rel="stylesheet" href="dt.css?v=20261117c">
+<link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="dt.js?v=20261117c"></script>
+<script src="dt.js?v=20261117d"></script>
+<script src="aliascall_store.js?v=20261117"></script>
+<script src="aliascall_web_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117"></script>
 <style>
 .hero{ background:linear-gradient(135deg,var(--navy),var(--sky)); color:#fff; border-radius:22px; padding:22px 20px; display:flex; flex-direction:column; gap:8px; }
 .hero h1{ margin:0; font-size:24px; line-height:1.3; text-wrap:balance; } .hero p{ margin:0; opacity:.93; font-size:15px; }
@@ -62,7 +65,8 @@
     </div>
   </section>
 
-  <p class="hint" style="text-align:center">내 방 목록은 이 휴대폰에 저장돼요. 휴대폰을 바꾸면 방장에게 초대 코드를 다시 받아 들어오세요.</p>
+  <p class="hint" style="text-align:center">내 방 목록은 이 휴대폰에 기억돼요. 휴대폰을 바꿀 때는 방 안 ☰ → 「휴대폰 바꿀 때」로 아이디를 정해 두세요.</p>
+  <button class="btn g" type="button" id="bRestore">📲 다른 휴대폰에서 쓰던 방 가져오기</button>
   <p class="foot">위브앱솔루션 · 대표 이미화 · 사업자등록번호 206-08-71754 · 통신판매업신고 2022-수원권선-1701<br>경기도 수원시 권선구 수성로47 10동 501호 · weapps.kr@gmail.com</p>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -139,6 +143,7 @@ async function joinCard(code){
   };
 }
 
+$('bRestore').onclick = function(){ DT.restoreSheet(function(){ loadRooms(); }); };
 var q = new URLSearchParams(location.search), j = q.get('j');
 if (j) { history.replaceState(null, '', location.pathname); joinCard(j.toUpperCase()); }
 loadRooms();

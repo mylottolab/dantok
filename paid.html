@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<title>결제 — 단톡방</title>
+<!-- 💬 이니시스 결제를 마치고 돌아오는 곳(aliascall-web-pay → https://dantok.kr/paid.html?webpaid=1|0&sku=…&msg=…). 2026-11-17 -->
+<link rel="stylesheet" href="dt.css?v=20261117d">
+</head>
+<body>
+<div class="w" style="min-height:100vh;justify-content:center">
+  <section class="card" style="text-align:center;align-items:center">
+    <div id="ic" style="font-size:52px">⏳</div>
+    <h2 id="t">결제를 확인하는 중…</h2>
+    <p id="m"></p>
+    <a class="btn" id="go" href="./" style="align-self:stretch">돌아가기</a>
+  </section>
+</div>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search), ok = q.get('webpaid') === '1', back = './';
+  try { back = localStorage.getItem('dt_pay_back') || './'; localStorage.removeItem('dt_pay_back'); } catch (e) {}
+  if (!/^https:\/\/dantok\.kr\//.test(back) && back !== './') back = './';
+  var names = { dantok_room_1y: '방 이용 기간이 1년 늘었어요.', dantok_room_10g: '방 저장 공간이 10GB 늘었어요.', dantok_gal_5g: '내 갤러리가 5GB로 늘었어요. 이제 동영상도 올릴 수 있어요.', dantok_gal_15g: '내 갤러리가 15GB로 늘었어요. 이제 동영상도 올릴 수 있어요.' };
+  document.getElementById('ic').textContent = ok ? '🎉' : '😥';
+  document.getElementById('t').textContent = ok ? '결제가 끝났어요' : '결제를 마치지 못했어요';
+  document.getElementById('m').textContent = ok ? (names[q.get('sku')] || '고맙습니다!') : (q.get('msg') || '다시 시도해 주세요.');
+  document.getElementById('go').href = back;
+  if (ok) setTimeout(function(){ location.replace(back); }, 2500);
+})();
+</script>
+</body>
+</html>

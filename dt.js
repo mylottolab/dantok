@@ -80,6 +80,46 @@
     return r.data || [];
   }
   function songUrl(path){ return BU_URL + '/storage/v1/object/public/alias-music/' + String(path).split('/').map(encodeURIComponent).join('/'); }
+  /* 📲 휴대폰 바꿀 때: 지금의 이름 없는 계정에 아이디 · 비밀번호를 붙여 둡니다(전화번호 · 이메일 필요 없음).
+     새 휴대폰에서 같은 아이디로 들어오면 내 방 · 갤러리 · 이용권이 그대로 따라옵니다. */
+  var KEEP_DOMAIN = '@dantok.guest.aliascall.internal';
+  function idOk(v){ return /^[a-z0-9_]{4,20}$/.test(v); }
+  async function keepSheet(){
+    var u = await ready(), anon = u.is_anonymous !== false && !u.email;
+    if (!anon) {
+      var id = String(u.email || '').split('@')[0];
+      sheet('<h3>📲 휴대폰 바꿀 때</h3><p>이 휴대폰은 아이디 <b>' + esc(id) + '</b>로 지켜지고 있어요.</p><p class="hint">새 휴대폰에서 단톡방 첫 화면 → 「다른 휴대폰에서 쓰던 방 가져오기」에 이 아이디와 비밀번호를 넣으면 내 방 · 갤러리 · 이용권이 그대로 와요.</p>');
+      return;
+    }
+    var s = sheet('<h3>📲 휴대폰 바꿀 때 (내 방 지키기)</h3><p class="hint">지금은 이 휴대폰에만 내 방이 기억돼요. 아이디와 비밀번호를 정해 두면 휴대폰을 바꾸거나 앱을 지웠다 깔아도 내 방 · 갤러리 · 산 이용권을 그대로 가져와요. 전화번호 · 이메일은 필요 없어요.</p>' +
+      '<label>아이디 (영문 소문자 · 숫자 4~20자)<input id="kId" maxlength="20" autocapitalize="none" autocomplete="username" placeholder="예) mom1958"></label>' +
+      '<label>비밀번호 (6자 이상)<input id="kPw" type="password" maxlength="40" autocomplete="new-password"></label>' +
+      '<p class="err" id="kE" hidden></p><button class="btn sun" type="button" id="kGo">정해 두기</button><p class="hint">⚠ 아이디 · 비밀번호를 잊으면 찾아 드릴 수 없어요. 꼭 적어 두세요.</p>');
+    $('kGo').onclick = async function(){
+      var id = $('kId').value.trim().toLowerCase(), pw = $('kPw').value, b = this;
+      var err = function(m){ $('kE').textContent = m; $('kE').hidden = false; b.disabled = false; };
+      if (!idOk(id)) return err('아이디는 영문 소문자 · 숫자 4~20자로 정해 주세요.');
+      if (pw.length < 6) return err('비밀번호는 6자 이상으로 정해 주세요.');
+      b.disabled = true;
+      var r = await sb.auth.updateUser({ email: id + KEEP_DOMAIN, password: pw });
+      if (r.error) return err(/already|registered|exists/i.test(r.error.message) ? '이미 있는 아이디예요. 다른 아이디로 정해 주세요.' : '정하지 못했어요. 잠시 뒤에 다시 해 주세요.');
+      var u2 = (await sb.auth.getUser()).data.user;
+      if (!u2 || !u2.email) return err('정하지 못했어요. 잠시 뒤에 다시 해 주세요.');
+      s.close(); toast('아이디 ' + id + '로 지켜 두었어요.');
+    };
+  }
+  /* 새 휴대폰에서: 아이디 · 비밀번호로 내 방 가져오기 */
+  function restoreSheet(done){
+    var s = sheet('<h3>📲 다른 휴대폰에서 쓰던 방 가져오기</h3><p class="hint">예전 휴대폰에서 「휴대폰 바꿀 때」로 정해 둔 아이디와 비밀번호를 넣어 주세요.</p>' +
+      '<label>아이디<input id="rId" maxlength="20" autocapitalize="none" autocomplete="username"></label><label>비밀번호<input id="rPw" type="password" maxlength="40" autocomplete="current-password"></label>' +
+      '<p class="err" id="rE" hidden></p><button class="btn" type="button" id="rGo">가져오기</button><p class="hint">⚠ 이 휴대폰에서 아이디 없이 만든 방이 있으면 그 방은 이 휴대폰에서 보이지 않게 돼요.</p>');
+    $('rGo').onclick = async function(){
+      var id = $('rId').value.trim().toLowerCase(), b = this; b.disabled = true;
+      var r = await sb.auth.signInWithPassword({ email: id + KEEP_DOMAIN, password: $('rPw').value });
+      if (r.error) { $('rE').textContent = '아이디나 비밀번호가 맞지 않아요.'; $('rE').hidden = false; b.disabled = false; return; }
+      readyP = null; s.close(); toast('가져왔어요!'); if (done) done();
+    };
+  }
   window.DT = { sb: sb, URL0: URL0, $: $, esc: esc, toast: toast, errText: errText, ERR: ERR, ready: ready, rpc: rpc, av: av, initial: initial,
-                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl };
+                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl, keepSheet: keepSheet, restoreSheet: restoreSheet };
 })();

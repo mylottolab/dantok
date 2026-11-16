@@ -10,10 +10,13 @@
      사진마다 블록 크기(작게 1x1 · 가로 2x1 · 세로 1x2 · 크게 2x2)를 고르고, 꾹 눌러 끌어서 자리를 바꾸면
      화면이 빈칸을 메우며 블록처럼 쌓습니다(grid dense). 나와 같은 방 사람만 볼 수 있습니다.
      서버: 18_dantok_gallery.sql · 2026-11-17 -->
-<link rel="stylesheet" href="dt.css?v=20261117c">
+<link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-<script src="dt.js?v=20261117c"></script>
+<script src="dt.js?v=20261117d"></script>
+<script src="aliascall_store.js?v=20261117"></script>
+<script src="aliascall_web_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117"></script>
 <style>
 .hd{ position:sticky; top:0; z-index:20; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:8px; }
 .hd a, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:19px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; padding:0; }
@@ -31,6 +34,8 @@
 .grid .ph{ position:relative; border-radius:10px; overflow:hidden; background:var(--tint); cursor:pointer; }
 .grid .ph img{ width:100%; height:100%; object-fit:cover; display:block; -webkit-user-drag:none; user-select:none; -webkit-touch-callout:none; }
 .grid .ph.s2x1{ grid-column:span 2; } .grid .ph.s1x2{ grid-row:span 2; } .grid .ph.s2x2{ grid-column:span 2; grid-row:span 2; }
+.grid .ph .vid{ position:absolute; left:6px; top:6px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; font-weight:800; border-radius:8px; padding:1px 7px; }
+.view video{ max-width:100%; max-height:84vh; }
 .grid .ph .cap{ position:absolute; left:0; right:0; bottom:0; padding:14px 8px 5px; font-size:12px; font-weight:700; color:#fff; background:linear-gradient(transparent, rgba(0,0,0,.6)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .grid.edit .ph{ outline:2px dashed var(--sun); outline-offset:-2px; }
 .grid.edit .ph::after{ content:attr(data-span); position:absolute; top:5px; right:5px; background:rgba(0,0,0,.55); color:#fff; font-size:11px; font-weight:800; border-radius:8px; padding:1px 6px; }
@@ -58,7 +63,7 @@
   <div class="tt"><b id="title">갤러리</b><small id="sub"></small></div>
 </header>
 <div class="w" id="main"><p class="hint">불러오는 중…</p></div>
-<input type="file" id="fPh" accept="image/*" multiple hidden>
+<input type="file" id="fPh" accept="image/*,video/*" multiple hidden>
 <div class="toast" id="toast" role="status"></div>
 <script>
 (function(){
@@ -78,13 +83,15 @@ async function albums(){
   var r = await DT.rpc('dt_gal_user', { p_room: ROOM, p_user: USER });
   if (!r.ok) { $('main').innerHTML = '<p class="empty">' + esc(DT.errText(r.error)) + '</p>'; return; }
   G = r; $('title').textContent = r.mine ? '내 갤러리' : (r.nick || '') + '님의 갤러리';
+  if (r.mine) await status();
   $('sub').textContent = r.mine ? r.count + ' / ' + r.limit + '장 · 나와 같은 방 사람만 볼 수 있어요' : '앨범 ' + r.albums.length + '개';
   await sign(r.albums.map(function(a){ return a.cover; }));
   var h = r.albums.map(function(a){
     return '<button class="alb" type="button" data-a="' + a.id + '"><span class="cv">' + (a.cover && URLS[a.cover] ? '<img alt="" src="' + esc(URLS[a.cover]) + '">' : '🖼') + '</span><b>' + esc(a.title) + '</b><small>' + a.n + '장 · ' + (a.scope === 'room' ? '🔒 ' + esc(a.room_name || '한 방') + '만' : '내 모든 방') + '</small></button>';
   }).join('');
   if (r.mine) h += '<button class="alb new" type="button" id="newAlb"><span class="cv">＋</span><b>새 앨범</b><small>여행 · 가족 · 모임</small></button>';
-  $('main').innerHTML = (r.albums.length || r.mine ? '<div class="albums">' + h + '</div>' : '<p class="empty">아직 앨범이 없어요.</p>');
+  $('main').innerHTML = (r.mine ? planBox() : '') + (r.albums.length || r.mine ? '<div class="albums">' + h + '</div>' : '<p class="empty">아직 앨범이 없어요.</p>');
+  if ($('bPlan')) $('bPlan').onclick = function(){ plans(); };
   document.querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ location.href = 'gallery.html?r=' + encodeURIComponent(ROOM) + '&u=' + encodeURIComponent(USER) + '&a=' + b.getAttribute('data-a'); }; });
   if ($('newAlb')) $('newAlb').onclick = function(){ albumSheet(null); };
 }
@@ -111,6 +118,22 @@ function albumSheet(a){
   }; }
 }
 
+/* ---------- 내 갤러리 한도 · 늘리기 (돈은 본인이) ---------- */
+var ST = null;
+async function status(){ try { ST = await DT.rpc('dt_gal_status'); } catch (e) { ST = null; } return ST; }
+function planBox(){
+  if (!ST) return '';
+  var used = DT.size(ST.used), line = ST.paid
+    ? '📦 갤러리 이용권 · ' + used + ' / ' + DT.size(ST.bytes) + ' · ' + new Date(ST.until).toLocaleDateString('ko-KR') + '까지 · 🎬 동영상 가능'
+    : '무료 · 사진 ' + ST.count + ' / ' + ST.photos + '장 (' + used + ' / ' + DT.size(ST.bytes) + ') · 동영상은 이용권이 있어야 올려요';
+  return '<div class="card" style="gap:8px"><p style="margin:0;font-size:14px;color:var(--ink)">' + line + '</p><button class="btn sun" type="button" id="bPlan" style="padding:11px">📦 갤러리 늘리기 · 동영상 올리기</button></div>';
+}
+function plans(why){
+  if (typeof why !== 'string') why = '';
+  DT.planSheet('📦 내 갤러리 늘리기', (why ? why + ' ' : '') + '무료는 사진 200장 · 500MB까지예요. 이용권이 있으면 장수 제한 없이 정한 용량까지 사진과 동영상(한 개 100MB까지)을 올려요. 돈은 갤러리 주인인 내가 내요.',
+    ['dantok_gal_5g', 'dantok_gal_15g'], null, async function(){ await status(); load(); });
+}
+
 /* ---------- 앨범 안: 블록 쌓기 ---------- */
 async function album(){
   var r = await DT.rpc('dt_gal_album', { p_album: ALBUM });
@@ -118,10 +141,11 @@ async function album(){
   A = r.album; PH = r.photos;
   $('title').textContent = A.title; $('sub').textContent = PH.length + '장' + (A.scope === 'room' ? ' · 🔒 이 방 사람만' : '');
   await sign(PH.map(function(p){ return p.thumb; }));
-  var tools = A.mine ? '<div class="tools"><button class="btn sun" type="button" id="bAdd">＋ 사진 올리기</button><button class="btn ' + (EDIT ? '' : 'g') + '" type="button" id="bEdit">' + (EDIT ? '✓ 꾸미기 끝' : '🧱 블록 꾸미기') + '</button><button class="btn g" type="button" id="bSet">⚙ 앨범 설정</button></div>' +
+  if (A.mine && !ST) await status();
+  var tools = A.mine ? '<div class="tools"><button class="btn sun" type="button" id="bAdd">＋ 사진 · 동영상</button><button class="btn ' + (EDIT ? '' : 'g') + '" type="button" id="bEdit">' + (EDIT ? '✓ 꾸미기 끝' : '🧱 블록 꾸미기') + '</button><button class="btn g" type="button" id="bSet">⚙ 앨범 설정</button></div>' +
     (EDIT ? '<div class="editbar">사진을 누르면 블록 크기를 고르고, 꾹 눌러 끌면 자리를 옮겨요. 빈칸은 알아서 메워져요.</div>' : '') : '';
   $('main').innerHTML = tools + (PH.length ? '<div class="grid' + (EDIT ? ' edit' : '') + '" id="grid">' + PH.map(function(p){
-    return '<div class="ph s' + p.span + '" data-id="' + p.id + '" data-span="' + ({ '1x1': '작게', '2x1': '가로', '1x2': '세로', '2x2': '크게' }[p.span]) + '"><img alt="" loading="lazy" src="' + esc(URLS[p.thumb] || '') + '">' + (p.caption && !EDIT ? '<span class="cap">' + esc(p.caption) + '</span>' : '') + '</div>';
+    return '<div class="ph s' + p.span + '" data-id="' + p.id + '" data-span="' + ({ '1x1': '작게', '2x1': '가로', '1x2': '세로', '2x2': '크게' }[p.span]) + '"><img alt="" loading="lazy" src="' + esc(URLS[p.thumb] || '') + '">' + (p.kind === 'video' ? '<span class="vid">▶' + (p.secs ? ' ' + Math.floor(p.secs / 60) + ':' + String(p.secs % 60).padStart(2, '0') : '') + '</span>' : '') + (p.caption && !EDIT ? '<span class="cap">' + esc(p.caption) + '</span>' : '') + '</div>';
   }).join('') + '</div>' : '<p class="empty">' + (A.mine ? '＋ 사진 올리기로 첫 사진을 넣어 보세요.' : '아직 사진이 없어요.') + '</p>');
   cell();
   if (A.mine) {
@@ -183,23 +207,59 @@ function resize(file, max, q){
     img.src = u;
   });
 }
+/* 동영상의 첫 장면으로 작은 사진 만들기 */
+function vthumb(file){
+  return new Promise(function(res, rej){
+    var v = document.createElement('video'), u = URL.createObjectURL(file); v.muted = true; v.playsInline = true; v.preload = 'metadata'; v.src = u;
+    v.onloadedmetadata = function(){ try { v.currentTime = Math.min(1, (v.duration || 2) / 2); } catch (e) { rej('path'); } };
+    v.onseeked = function(){
+      var k = Math.min(1, 400 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas');
+      c.width = Math.round(v.videoWidth * k) || 400; c.height = Math.round(v.videoHeight * k) || 300;
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob(function(b){ URL.revokeObjectURL(u); b ? res({ blob: b, w: v.videoWidth, h: v.videoHeight, secs: Math.round(v.duration || 0) }) : rej('path'); }, 'image/jpeg', 0.8);
+    };
+    v.onerror = function(){ URL.revokeObjectURL(u); rej('path'); };
+  });
+}
 $('fPh').onchange = async function(){
   var fs = Array.from(this.files).slice(0, 30); this.value = ''; if (!fs.length) return;
+  if (!ST) await status();
+  if (fs.some(function(f){ return /^video\//.test(f.type); }) && !(ST && ST.video)) {
+    plans('🎬 동영상은 갤러리 이용권이 있어야 올릴 수 있어요.');
+    fs = fs.filter(function(f){ return !/^video\//.test(f.type); }); if (!fs.length) return;
+  }
   var ok = 0;
   for (var i = 0; i < fs.length; i++) {
-    DT.toast('사진 올리는 중 ' + (i + 1) + ' / ' + fs.length);
+    DT.toast('올리는 중 ' + (i + 1) + ' / ' + fs.length);
+    var pa = null, pt = null;
     try {
-      var big = await resize(fs[i], 1600, 0.85), small = await resize(fs[i], 400, 0.8), key = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      var pa = 'av/' + ME + '/g-' + key + '.jpg', pt = 'av/' + ME + '/t-' + key + '.jpg';
-      var u1 = await DT.sb.storage.from('dantok').upload(pa, big.blob, { contentType: 'image/jpeg' }); if (u1.error) throw u1.error;
-      var u2 = await DT.sb.storage.from('dantok').upload(pt, small.blob, { contentType: 'image/jpeg' }); if (u2.error) throw u2.error;
-      var r = await DT.rpc('dt_photo_add', { p_album: ALBUM, p_path: pa, p_thumb: pt, p_w: big.w, p_h: big.h, p_size: big.blob.size + small.blob.size, p_caption: null });
-      if (!r.ok) { DT.sb.storage.from('dantok').remove([pa, pt]).catch(function(){}); throw r.error; }
+      var key = Date.now().toString(36) + Math.random().toString(36).slice(2, 7), f = fs[i], vid = /^video\//.test(f.type), r;
+      if (vid) {
+        if (f.size > 104857600) throw 'too_big';
+        var th = await vthumb(f), ext = ((f.name.split('.').pop() || 'mp4').toLowerCase().match(/^(mp4|mov|webm|m4v)$/) || ['mp4'])[0];
+        pa = 'av/' + ME + '/v-' + key + '.' + ext; pt = 'av/' + ME + '/t-' + key + '.jpg';
+        var v1 = await DT.sb.storage.from('dantok').upload(pa, f, { contentType: f.type || 'video/mp4' }); if (v1.error) throw v1.error;
+        var v2 = await DT.sb.storage.from('dantok').upload(pt, th.blob, { contentType: 'image/jpeg' }); if (v2.error) throw v2.error;
+        r = await DT.rpc('dt_photo_add', { p_album: ALBUM, p_path: pa, p_thumb: pt, p_w: th.w, p_h: th.h, p_size: f.size + th.blob.size, p_caption: null, p_kind: 'video', p_secs: th.secs });
+      } else {
+        var big = await resize(f, 1600, 0.85), small = await resize(f, 400, 0.8);
+        pa = 'av/' + ME + '/g-' + key + '.jpg'; pt = 'av/' + ME + '/t-' + key + '.jpg';
+        var u1 = await DT.sb.storage.from('dantok').upload(pa, big.blob, { contentType: 'image/jpeg' }); if (u1.error) throw u1.error;
+        var u2 = await DT.sb.storage.from('dantok').upload(pt, small.blob, { contentType: 'image/jpeg' }); if (u2.error) throw u2.error;
+        r = await DT.rpc('dt_photo_add', { p_album: ALBUM, p_path: pa, p_thumb: pt, p_w: big.w, p_h: big.h, p_size: big.blob.size + small.blob.size, p_caption: null, p_kind: 'photo', p_secs: null });
+      }
+      if (!r.ok) throw r.error;
       ok++;
-    } catch (e) { DT.toast(e === 'gal_full' ? '갤러리는 200장까지예요. 저장권으로 늘릴 수 있어요.' : DT.errText(e)); break; }
+    } catch (e) {
+      if (pa) DT.sb.storage.from('dantok').remove([pa, pt]).catch(function(){});
+      if (e === 'gal_full') plans('갤러리 한도가 다 찼어요.');
+      else if (e === 'need_plan') plans('🎬 동영상은 갤러리 이용권이 있어야 올릴 수 있어요.');
+      else DT.toast(e === 'too_big' ? '동영상은 한 개 100MB까지예요.' : DT.errText(e));
+      break;
+    }
   }
-  if (ok) DT.toast(ok + '장을 올렸어요.');
-  album();
+  if (ok) DT.toast(ok + '개를 올렸어요.');
+  ST = null; album();
 };
 DT.ERR.gal_full = '갤러리는 200장까지예요.';
 
