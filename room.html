@@ -91,9 +91,11 @@ body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
 .ytpin{ align-self:flex-start; border:1.5px solid #E05252; background:transparent; color:inherit; border-radius:10px; padding:4px 10px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
 .m.mine .ytpin{ align-self:flex-end; }
 .cmp{ flex:none; background:var(--card); border-top:1.5px solid var(--line); padding:6px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left)); }
-.cmp .in{ max-width:720px; margin:0 auto; display:flex; gap:6px; align-items:flex-end; }
+.cmp .in{ max-width:720px; margin:0 auto; display:flex; gap:4px; align-items:flex-end; }
+.cmp textarea{ min-width:0; }
+@media (max-width:370px){ .cbtn{ width:32px; font-size:19px; } .cbtn.plus, .cbtn.send{ width:42px; height:42px; } .cmp textarea{ padding:11px 12px; } }
 .cmp textarea{ flex:1; min-height:46px; max-height:140px; resize:none; border-radius:22px; padding:11px 14px; line-height:1.45; }
-.cbtn{ flex:none; width:44px; height:46px; border-radius:50%; border:none; font-size:21px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; background:transparent; color:var(--ink); }
+.cbtn{ flex:none; width:36px; height:46px; border-radius:50%; border:none; font-size:21px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; background:transparent; color:var(--ink); }
 .cbtn.plus{ background:var(--tint); width:46px; }
 .cbtn.send{ background:var(--navy); color:#fff; font-size:19px; width:46px; }
 .cbtn:disabled{ opacity:.45; }
@@ -146,7 +148,7 @@ body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
   <div class="rec" id="rec" hidden><span class="dot"></span><b id="recT">녹음 중 0:00</b><button class="btn g" type="button" id="recX" style="padding:10px 14px">취소</button><button class="btn" type="button" id="recGo" style="padding:10px 14px">보내기</button></div>
   <div class="in" id="cin">
     <button class="cbtn plus" type="button" id="bPlus" aria-label="사진 · 파일 · 음성 보내기">＋</button>
-    <textarea id="txt" rows="1" maxlength="2000" placeholder="글을 적어 주세요"></textarea>
+    <textarea id="txt" rows="1" maxlength="2000" placeholder="메시지"></textarea>
     <button class="cbtn" type="button" id="bEmo" aria-label="이모티콘">😊</button>
     <button class="cbtn" type="button" id="bTtl" aria-label="사라지는 메시지">⏳</button>
     <button class="cbtn send" type="button" id="bSend" aria-label="보내기" disabled>➤</button>
@@ -179,7 +181,7 @@ async function loadRoom(){
   else if (R.owner && R.until && new Date(R.until) - Date.now() < 7 * 864e5) st = '⏳ ' + Math.max(0, Math.ceil((new Date(R.until) - Date.now()) / 864e5)) + '일 뒤 이용 기간이 끝나요. 메뉴(☰)에서 연장하세요.';
   $('state').hidden = !st; $('state').textContent = st;
   $('txt').disabled = !R.live; $('bPlus').disabled = !R.live; $('bTtl').disabled = !R.live;
-  $('txt').placeholder = !R.live ? '지금은 글을 쓸 수 없어요' : TTL ? '⏳ 사라지는 글을 적어 주세요' : '글을 적어 주세요';
+  $('txt').placeholder = !R.live ? '지금은 쓸 수 없어요' : TTL ? '⏳ 사라지는 메시지' : '메시지';
   paintYt(); paintMusic();
   return true;
 }
@@ -368,7 +370,7 @@ $('bEmo').onclick = function(){
 
 /* 사라지는 메시지 */
 var TTL_W = { 1: '1시간', 24: '하루', 168: '일주일' };
-function paintTtl(){ $('bTtl').classList.toggle('on', !!TTL); $('bTtl').textContent = TTL ? '⌛' : '⏳'; T.placeholder = TTL ? '⏳ ' + TTL_W[TTL] + ' 뒤 사라지는 글' : '글을 적어 주세요'; }
+function paintTtl(){ $('bTtl').classList.toggle('on', !!TTL); $('bTtl').textContent = TTL ? '⌛' : '⏳'; T.placeholder = TTL ? '⏳ ' + TTL_W[TTL] + ' 뒤 사라짐' : '메시지'; }
 $('bTtl').onclick = function(){
   var s = DT.sheet('<h3>⏳ 사라지는 메시지</h3><p class="hint">지금부터 보내는 글 · 사진이 정한 시간 뒤에 모두의 화면과 서버에서 지워져요. 받는 사람에게도 「사라짐」이 표시돼요.</p>' +
     [[null, '끄기 (그대로 남기기)'], [1, '1시간 뒤 사라짐'], [24, '하루 뒤 사라짐'], [168, '일주일 뒤 사라짐']].map(function(x){ return '<button class="btn ' + (TTL === x[0] ? '' : 'g') + '" type="button" data-t="' + x[0] + '">' + x[1] + '</button>'; }).join('') +
