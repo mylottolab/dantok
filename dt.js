@@ -65,6 +65,16 @@
     try { if (navigator.share) { await navigator.share({ title: title, text: text, url: url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     copy(text + ' ' + url);
   }
+  /* 🎵 같이 듣기: 회사가 고른 곡은 부름 서버(gallery_music · 공개 보관함 alias-music)에 있습니다. 읽기만 합니다. */
+  var BU_URL = 'https://azredlrnvsssfjytaotb.supabase.co';
+  var BU_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cmVkbHJudnNzc2ZqeXRhb3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MDg1MjgsImV4cCI6MjEwMzk4NDUyOH0.2gTxzr54vRSZzFnyhLSd1Imv3OnwRBQs925CYeXdonI';
+  var bu = null;
+  async function songs(){
+    if (!bu) bu = window.supabase.createClient(BU_URL, BU_KEY, { auth: { persistSession: false, autoRefreshToken: false, storageKey: 'dantok-music' } });
+    var r = await bu.from('gallery_music').select('id, title, artist, path, mood, seconds').eq('is_active', true).order('sort').order('title');
+    return r.data || [];
+  }
+  function songUrl(path){ return BU_URL + '/storage/v1/object/public/alias-music/' + String(path).split('/').map(encodeURIComponent).join('/'); }
   window.DT = { sb: sb, URL0: URL0, $: $, esc: esc, toast: toast, errText: errText, ERR: ERR, ready: ready, rpc: rpc, av: av, initial: initial,
-                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/' };
+                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl };
 })();

@@ -9,9 +9,9 @@
 <meta name="theme-color" content="#1D3B5C">
 <!-- 💬 단톡방 첫 화면: 내 방 · 방 만들기 · 초대 코드로 들어가기. ?j=초대코드 로 오면 바로 들어가기 카드.
      서버는 가림 프로젝트(15_dantok_rooms.sql). 2026-11-17 1단계 문자방. -->
-<link rel="stylesheet" href="dt.css?v=20261117">
+<link rel="stylesheet" href="dt.css?v=20261117b">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="dt.js?v=20261117"></script>
+<script src="dt.js?v=20261117b"></script>
 <style>
 .hero{ background:linear-gradient(135deg,var(--navy),var(--sky)); color:#fff; border-radius:22px; padding:22px 20px; display:flex; flex-direction:column; gap:8px; }
 .hero h1{ margin:0; font-size:24px; line-height:1.3; text-wrap:balance; } .hero p{ margin:0; opacity:.93; font-size:15px; }
@@ -80,7 +80,7 @@ async function loadRooms(){
   try { list = await DT.rpc('dt_my'); } catch (e) { $('mine').hidden = false; $('rooms').innerHTML = '<p class="err">' + esc(DT.errText(e)) + '</p>'; return; }
   var joining = !$('join').hidden; $('mine').hidden = !list.length; $('hero').hidden = !!list.length || joining; $('intro').hidden = list.length > 0 || joining;
   $('rooms').innerHTML = list.map(function(r){
-    var l = r.last || {}, pv = l.kind === 'system' ? (l.body || '') : l.kind === 'photo' ? '📷 사진' : l.kind === 'video' ? '🎬 동영상' : l.kind === 'audio' ? '🎵 음원' : l.kind === 'file' ? '📎 파일' : (l.body == null ? '지워진 글' : l.body);
+    var l = r.last || {}, pv = l.kind === 'system' ? (l.body || '') : l.kind === 'photo' ? '📷 사진' : l.kind === 'video' ? '🎬 동영상' : l.kind === 'audio' ? '🎵 음원' : l.kind === 'voice' ? '🎤 음성 메시지' : l.kind === 'file' ? '📎 파일' : (l.body == null ? '지워진 글' : l.body);
     if (l.nick && l.kind !== 'system') pv = l.nick + ': ' + pv;
     return '<a class="room" href="room.html?r=' + encodeURIComponent(r.id) + '"><span class="ricon">' + (r.owner ? '👑' : '💬') + '</span>' +
       '<span class="mid"><span class="nm">' + esc(r.name) + '<small>' + r.count + '명' + (r.muted ? ' · 🔕' : '') + '</small></span><span class="pv" style="display:block">' + esc(r.live ? pv : '⏸ 이용 기간이 끝났어요') + '</span></span>' +

@@ -6,93 +6,152 @@
 <script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <title>단톡방</title>
 <meta name="theme-color" content="#1D3B5C">
-<!-- 💬 단톡방 대화 화면 (room.html?r=방번호). 글 · 사진 · 동영상 · 음원 · 파일, 공지, 초대, 사람 목록, 방장 기능, 신고 · 차단.
-     새 글은 화면을 보고 있는 동안 4초마다 가져옵니다. 2026-11-17 1단계 문자방. -->
-<link rel="stylesheet" href="dt.css?v=20261117">
+<!-- 💬 단톡방 대화 화면 (room.html?r=방번호)
+     글 · 사진(여러 장 묶음) · 바로 찍기 · 동영상 · 음원 · 음성 메시지 · 파일 · 이모티콘
+     답장 · 고치기 · 지우기 · 즐겨찾기 · 검색 · 사라지는 메시지 · 유튜브 같이 보기 · 같이 듣기(회사 곡)
+     공지 · 초대(코드 · 링크 · QR) · 사람 목록 · 방장 기능 · 신고 · 차단 · 알림 끄기
+     실시간: 채널 dt-방번호 로 「새 글 있음 · 입력 중 · 바뀜」만 방송하고, 글 내용은 늘 서버(dt_msgs)에서 받습니다.
+     (채널을 엿들어도 글은 보이지 않습니다.) 방송이 안 되면 4초마다 가져옵니다.
+     2026-11-17 · 종단간 암호화는 다음 과제. -->
+<link rel="stylesheet" href="dt.css?v=20261117b">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="dt.js?v=20261117"></script>
+<script src="dt.js?v=20261117b"></script>
 <style>
 html,body{ height:100%; }
 body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
-.hd{ flex:none; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:8px; }
-.hd a.back, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:20px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; padding:0; }
+.hd{ flex:none; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:6px; }
+.hd a.back, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:19px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; padding:0; }
 .hd .tt{ flex:1; min-width:0; }
 .hd .tt b{ display:block; font-size:17.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.hd .tt small{ opacity:.8; font-size:13px; }
+.hd .tt small{ opacity:.85; font-size:13px; }
+.hd .tt small.typing{ color:var(--sun); opacity:1; font-weight:700; }
 .notice{ flex:none; background:var(--warnbg); color:var(--warn); padding:8px max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left)); font-size:14.5px; font-weight:700; display:flex; gap:8px; cursor:pointer; }
 .notice span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .notice.open span{ white-space:normal; }
 .state{ flex:none; background:var(--tint); color:var(--ink); text-align:center; padding:8px 14px; font-size:14px; font-weight:700; }
-#list{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:10px max(10px, env(safe-area-inset-right)) 14px max(10px, env(safe-area-inset-left)); display:flex; flex-direction:column; gap:6px; }
+.yt{ flex:none; background:#000; }
+.yt .yf{ position:relative; width:100%; height:170px; }
+.yt.big .yf{ height:auto; aspect-ratio:16/9; max-height:46vh; }
+.yt iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.yt .yc, .mu{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); background:#141C26; color:#EEF2F7; font-size:13px; }
+.yt .yc .yl, .mu .ml{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.85; }
+.yt .yc button, .mu button{ border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); color:#EEF2F7; border-radius:9px; padding:5px 9px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+.mu{ flex:none; background:linear-gradient(90deg,#1D3B5C,#24507A); }
+.strip{ flex:none; padding:6px 14px; background:#141C26; color:#EEF2F7; font-size:13px; font-weight:700; cursor:pointer; }
+#list{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:10px max(10px, env(safe-area-inset-right)) 14px max(10px, env(safe-area-inset-left)); }
 .inner{ max-width:720px; width:100%; margin:0 auto; display:flex; flex-direction:column; gap:6px; }
 .more{ align-self:center; border:1.5px solid var(--line); background:var(--card); color:var(--sub); border-radius:20px; padding:6px 14px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
 .day{ align-self:center; background:var(--tint); color:var(--sub); font-size:13px; font-weight:700; border-radius:20px; padding:3px 12px; margin:8px 0 2px; }
 .sys{ align-self:center; color:var(--sub); font-size:13.5px; text-align:center; max-width:90%; }
-.m{ display:flex; gap:8px; align-items:flex-start; max-width:100%; }
+.m{ display:flex; gap:8px; align-items:flex-start; max-width:100%; border-radius:12px; transition:background .6s; }
+.m.flash{ background:rgba(242,165,65,.25); }
 .m .av{ width:38px; height:38px; font-size:15px; }
 .m .col{ display:flex; flex-direction:column; gap:3px; min-width:0; max-width:78%; }
 .m .who{ font-size:13.5px; font-weight:700; color:var(--sub); }
 .m .ln{ display:flex; align-items:flex-end; gap:5px; min-width:0; }
-.b{ background:var(--their); border:1px solid var(--line); border-radius:4px 16px 16px 16px; padding:9px 12px; white-space:pre-wrap; overflow-wrap:anywhere; min-width:0; cursor:pointer; font-size:16.5px; }
+.b{ background:var(--their); border:1px solid var(--line); border-radius:4px 16px 16px 16px; padding:9px 12px; white-space:pre-wrap; overflow-wrap:anywhere; min-width:0; cursor:pointer; font-size:16.5px; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .b.del{ color:var(--sub); font-style:italic; }
-.b.media{ padding:4px; background:var(--their); }
-.b.media{ max-width:100%; }
-.b.media img, .b.media video{ display:block; width:min(230px, 56vw); max-width:100%; height:auto; max-height:340px; object-fit:cover; border-radius:12px; }
-.b.media audio{ width:min(260px, 62vw); }
-.b .file{ display:flex; gap:8px; align-items:center; padding:6px 8px; color:var(--ink); text-decoration:none; font-weight:700; }
+.b.media{ padding:4px; max-width:100%; }
+.b.media img, .b.media video{ display:block; width:min(230px, 56vw); max-width:100%; height:auto; max-height:340px; object-fit:cover; border-radius:12px; background:var(--tint); }
+.b.media audio{ width:min(250px, 60vw); display:block; }
+.b .file{ display:flex; gap:8px; align-items:center; padding:6px 8px; color:inherit; text-decoration:none; font-weight:700; }
+.b .q{ display:block; border-left:3px solid var(--sky); padding:2px 8px; margin:0 0 6px; font-size:13.5px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+.b.media .q{ margin:4px 6px 6px; }
+.b .q b{ color:var(--ink); }
+.tiles{ display:grid; gap:3px; grid-template-columns:repeat(3, 1fr); width:min(240px, 60vw); }
+.tiles.n2, .tiles.n4{ grid-template-columns:repeat(2, 1fr); }
+.tiles img{ width:100% !important; height:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px !important; max-height:none !important; }
+.voice{ display:flex; flex-direction:column; gap:4px; padding:6px 8px 4px; }
+.voice b{ font-size:13.5px; }
 .meta{ display:flex; flex-direction:column; align-items:flex-end; font-size:11.5px; color:var(--sub); flex:none; line-height:1.3; }
 .meta .u{ color:var(--sun); font-weight:900; }
+.meta .ex{ color:var(--red); font-weight:700; }
 .m.mine{ flex-direction:row-reverse; }
 .m.mine .col{ align-items:flex-end; }
 .m.mine .ln{ flex-direction:row-reverse; }
 .m.mine .meta{ align-items:flex-start; }
 .m.mine .b{ background:var(--mine); color:var(--mineInk); border-color:transparent; border-radius:16px 4px 16px 16px; }
-.m.mine .b.media{ background:var(--mine); }
+.m.mine .b .q b{ color:var(--mineInk); } .m.mine .b .q{ color:var(--mineInk); opacity:.8; border-color:var(--sun); }
 .m.cont .av{ visibility:hidden; height:0; }
 .m.cont .who{ display:none; }
 .warn{ font-size:12.5px; color:var(--warn); background:var(--warnbg); border-radius:8px; padding:3px 8px; }
-.cmp{ flex:none; background:var(--card); border-top:1.5px solid var(--line); padding:8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left)); }
-.cmp .in{ max-width:720px; margin:0 auto; display:flex; gap:8px; align-items:flex-end; }
+.ytpin{ align-self:flex-start; border:1.5px solid #E05252; background:transparent; color:inherit; border-radius:10px; padding:4px 10px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.m.mine .ytpin{ align-self:flex-end; }
+.cmp{ flex:none; background:var(--card); border-top:1.5px solid var(--line); padding:6px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left)); }
+.cmp .in{ max-width:720px; margin:0 auto; display:flex; gap:6px; align-items:flex-end; }
 .cmp textarea{ flex:1; min-height:46px; max-height:140px; resize:none; border-radius:22px; padding:11px 14px; line-height:1.45; }
-.cmp .plus, .cmp .send{ flex:none; width:46px; height:46px; border-radius:50%; border:none; font-size:22px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; }
-.cmp .plus{ background:var(--tint); color:var(--ink); }
-.cmp .send{ background:var(--navy); color:#fff; font-size:19px; }
-.cmp .send:disabled{ opacity:.45; }
+.cbtn{ flex:none; width:44px; height:46px; border-radius:50%; border:none; font-size:21px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; background:transparent; color:var(--ink); }
+.cbtn.plus{ background:var(--tint); width:46px; }
+.cbtn.send{ background:var(--navy); color:#fff; font-size:19px; width:46px; }
+.cbtn:disabled{ opacity:.45; }
+.cbtn.on{ background:var(--warnbg); color:var(--warn); }
+.ctx{ max-width:720px; margin:0 auto 6px; display:flex; align-items:center; gap:8px; background:var(--tint); border-radius:12px; padding:7px 10px; font-size:13.5px; }
+.ctx span{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ctx button{ border:none; background:none; color:var(--sub); font-size:18px; cursor:pointer; padding:0 4px; }
+.emo{ max-width:720px; margin:0 auto 6px; display:grid; grid-template-columns:repeat(8, 1fr); gap:2px; max-height:180px; overflow-y:auto; }
+.emo button{ border:none; background:none; font-size:26px; padding:6px 0; cursor:pointer; border-radius:10px; }
+.emo button:active{ background:var(--tint); }
+.rec{ max-width:720px; margin:0 auto; display:flex; align-items:center; gap:10px; padding:6px 4px; }
+.rec .dot{ width:12px; height:12px; border-radius:50%; background:#E05252; animation:blink 1s infinite; }
+@keyframes blink{ 50%{ opacity:.25; } }
+.rec b{ flex:1; font-size:16px; }
 .bar{ height:10px; border-radius:6px; background:var(--tint); overflow:hidden; } .bar i{ display:block; height:100%; background:var(--sky); }
 .sec{ font-size:13.5px; font-weight:800; color:var(--sub); margin-top:4px; }
 .codebig{ font-size:30px; letter-spacing:6px; font-weight:900; text-align:center; background:var(--tint); border-radius:14px; padding:10px; }
 #qr{ align-self:center; background:#fff; padding:12px; border-radius:14px; }
-.view{ position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:80; display:flex; align-items:center; justify-content:center; padding:env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+.res{ display:flex; flex-direction:column; gap:2px; }
+.res button{ text-align:left; border:none; border-bottom:1px solid var(--line); background:none; color:var(--ink); font:inherit; padding:10px 4px; cursor:pointer; }
+.res button small{ display:block; color:var(--sub); font-size:12.5px; }
+.res mark{ background:var(--warnbg); color:var(--warn); border-radius:3px; }
+.view{ position:fixed; inset:0; background:rgba(0,0,0,.94); z-index:80; display:flex; align-items:center; justify-content:center; }
 .view img{ max-width:100%; max-height:100%; }
-.view button{ position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(env(safe-area-inset-right, 0px) + 10px); width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:22px; }
+.view .vb{ position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(env(safe-area-inset-right, 0px) + 10px); display:flex; gap:8px; }
+.view .vb button, .view .vb a{ height:44px; min-width:44px; padding:0 14px; border-radius:22px; border:none; background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:15px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; }
+.view .nav{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:26px; border-radius:12px; cursor:pointer; }
+.view .nav.l{ left:8px; } .view .nav.r{ right:8px; }
+.songs{ display:flex; flex-direction:column; }
+.songs button{ display:flex; gap:10px; align-items:center; text-align:left; border:none; border-bottom:1px solid var(--line); background:none; color:var(--ink); font:inherit; padding:10px 4px; cursor:pointer; }
+.songs button small{ color:var(--sub); }
 </style>
 </head>
 <body>
 <header class="hd">
   <a class="back" href="./" aria-label="내 방 목록">‹</a>
   <div class="tt"><b id="rName">단톡방</b><small id="rSub"></small></div>
+  <button type="button" id="bFind" aria-label="대화 검색">🔍</button>
   <button type="button" id="bMenu" aria-label="방 메뉴">☰</button>
 </header>
 <div class="notice" id="notice" hidden><b>📢</b><span id="noticeT"></span></div>
 <div class="state" id="state" hidden></div>
+<div class="yt" id="yt" hidden></div>
+<div class="strip" id="ytStrip" hidden>📺 같이 보는 영상 다시 열기</div>
+<div class="mu" id="mu" hidden></div>
 <main id="list"><div class="inner" id="inner"><p class="sys">불러오는 중…</p></div></main>
 <div class="cmp" id="cmp">
-  <div class="in">
-    <button class="plus" type="button" id="bPlus" aria-label="사진 · 파일 보내기">＋</button>
+  <div class="ctx" id="ctx" hidden><span id="ctxT"></span><button type="button" id="ctxX" aria-label="취소">✕</button></div>
+  <div class="emo" id="emo" hidden></div>
+  <div class="rec" id="rec" hidden><span class="dot"></span><b id="recT">녹음 중 0:00</b><button class="btn g" type="button" id="recX" style="padding:10px 14px">취소</button><button class="btn" type="button" id="recGo" style="padding:10px 14px">보내기</button></div>
+  <div class="in" id="cin">
+    <button class="cbtn plus" type="button" id="bPlus" aria-label="사진 · 파일 · 음성 보내기">＋</button>
     <textarea id="txt" rows="1" maxlength="2000" placeholder="글을 적어 주세요"></textarea>
-    <button class="send" type="button" id="bSend" aria-label="보내기" disabled>➤</button>
+    <button class="cbtn" type="button" id="bEmo" aria-label="이모티콘">😊</button>
+    <button class="cbtn" type="button" id="bTtl" aria-label="사라지는 메시지">⏳</button>
+    <button class="cbtn send" type="button" id="bSend" aria-label="보내기" disabled>➤</button>
   </div>
 </div>
-<input type="file" id="fMedia" accept="image/*,video/*" hidden>
+<input type="file" id="fMedia" accept="image/*,video/*" multiple hidden>
+<input type="file" id="fCam" accept="image/*" capture="environment" hidden>
 <input type="file" id="fAny" hidden>
+<audio id="player" preload="none" hidden></audio>
 <div class="toast" id="toast" role="status"></div>
 <script>
 (function(){
 var $ = DT.$, esc = DT.esc;
 var ROOM = new URLSearchParams(location.search).get('r');
 if (!ROOM) { location.replace('./'); return; }
-var R = null, ME = null, MSGS = [], FIRST = null, LAST = 0, READS = [], URLS = {}, busy = false, poll = null;
+var R = null, ME = null, MSGS = [], FIRST = null, LAST = 0, READS = [], URLS = {}, busy = false, poll = null, CH = null, LIVE = false;
+var replyTo = null, editing = null, TTL = null;
 
 /* ---------- 방 정보 ---------- */
 async function loadRoom(){
@@ -101,64 +160,93 @@ async function loadRoom(){
   R = r.room; ME = R.me;
   document.title = R.name + ' — 단톡방';
   $('rName').textContent = R.name;
-  $('rSub').textContent = R.members.length + '명' + (ME && ME.muted ? ' · 🔕 알림 꺼짐' : '');
+  subLine();
   $('notice').hidden = !R.notice; $('noticeT').textContent = R.notice || '';
   var st = '';
   if (!R.live) st = R.status !== 'active' ? '이 방은 운영 규칙 때문에 멈췄어요.' : (R.ends_on && new Date(R.ends_on + 'T23:59:59') < new Date()) ? '끝나는 날이 지나 닫힌 방이에요. 글은 읽을 수만 있어요.' : '⏸ 이용 기간이 끝났어요. ' + (R.owner ? '메뉴(☰)에서 연장해 주세요.' : '방장이 연장하면 다시 쓸 수 있어요.');
-  else if (!R.owner && R.until && new Date(R.until) - Date.now() < 7 * 864e5) st = '';
   else if (R.owner && R.until && new Date(R.until) - Date.now() < 7 * 864e5) st = '⏳ ' + Math.max(0, Math.ceil((new Date(R.until) - Date.now()) / 864e5)) + '일 뒤 이용 기간이 끝나요. 메뉴(☰)에서 연장하세요.';
   $('state').hidden = !st; $('state').textContent = st;
-  $('txt').disabled = !R.live; $('bPlus').disabled = !R.live;
-  $('txt').placeholder = R.live ? '글을 적어 주세요' : '지금은 글을 쓸 수 없어요';
+  $('txt').disabled = !R.live; $('bPlus').disabled = !R.live; $('bTtl').disabled = !R.live;
+  $('txt').placeholder = !R.live ? '지금은 글을 쓸 수 없어요' : TTL ? '⏳ 사라지는 글을 적어 주세요' : '글을 적어 주세요';
+  paintYt(); paintMusic();
   return true;
+}
+var typingT = null;
+function subLine(who){
+  var s = $('rSub');
+  if (who) { s.className = 'typing'; s.textContent = who + '님이 입력 중…'; clearTimeout(typingT); typingT = setTimeout(function(){ subLine(); }, 3000); return; }
+  s.className = ''; s.textContent = R ? R.members.length + '명' + (ME && ME.muted ? ' · 🔕 알림 꺼짐' : '') : '';
 }
 $('notice').onclick = function(){ this.classList.toggle('open'); };
 
 /* ---------- 글 그리기 ---------- */
 var LINK = /(https?:\/\/[^\s<]+)/g;
 var RISK = /(https?:\/\/|www\.)|(\d{2,6}-\d{2,6}-\d{2,8})|(계좌|입금|송금|이체)/;
+function ytId(t){
+  if (!t) return null;
+  var m = String(t).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^ ]*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
+  if (m) return m[1];
+  var l = String(t).match(/youtube\.com\/(?:playlist|watch)\?(?:[^ ]*&)?list=([A-Za-z0-9_-]{10,64})/);
+  return l ? 'L:' + l[1] : null;
+}
 function textHtml(s){ return esc(s).replace(LINK, function(u){ return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>'; }); }
 function unreadOf(id){ var n = 0; for (var i = 0; i < READS.length; i++) if (READS[i] < id) n++; return n; }
-function bubble(g){
+function kindWord(k){ return k === 'photo' ? '📷 사진' : k === 'video' ? '🎬 동영상' : k === 'audio' ? '🎵 음원' : k === 'voice' ? '🎤 음성 메시지' : k === 'file' ? '📎 파일' : ''; }
+function quote(q){ if (!q) return ''; return '<span class="q" data-jump="' + q.id + '"><b>' + esc(q.nick || '') + '</b> ' + esc(q.body != null ? q.body : (kindWord(q.kind) || '지워진 글')) + '</span>'; }
+function mmss(s){ s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function src(p){ var u = URLS[p]; return u ? ' src="' + esc(u) + '"' : ''; }
+function bubble(g, group){
   if (g.deleted) return '<div class="b del">지워진 글이에요.</div>';
-  if (g.kind === 'text') return '<div class="b" data-id="' + g.id + '">' + textHtml(g.body) + '</div>';
-  var u = URLS[g.path] || '';
-  if (g.kind === 'photo') return '<div class="b media" data-id="' + g.id + '"><img alt="사진" loading="lazy" data-path="' + esc(g.path) + '"' + (u ? ' src="' + esc(u) + '"' : '') + ' style="min-width:120px;min-height:90px;background:var(--tint)"></div>';
-  if (g.kind === 'video') return '<div class="b media" data-id="' + g.id + '"><video controls playsinline preload="metadata" data-path="' + esc(g.path) + '"' + (u ? ' src="' + esc(u) + '"' : '') + '></video></div>';
-  if (g.kind === 'audio') return '<div class="b media" data-id="' + g.id + '"><div style="padding:4px 6px 2px;font-size:13.5px;font-weight:700">🎵 ' + esc(g.fname || '음원') + '</div><audio controls preload="none" data-path="' + esc(g.path) + '"' + (u ? ' src="' + esc(u) + '"' : '') + '></audio></div>';
-  return '<div class="b media" data-id="' + g.id + '"><a class="file" data-path="' + esc(g.path) + '"' + (u ? ' href="' + esc(u) + '"' : '') + ' target="_blank" rel="noopener">📎 <span>' + esc(g.fname || '파일') + '<br><small style="color:var(--sub);font-weight:600">' + DT.size(g.size) + '</small></span></a></div>';
+  var q = quote(g.reply);
+  if (group) return '<div class="b media" data-id="' + g.id + '"><div class="tiles n' + Math.min(group.length, 4) + '">' + group.slice(0, 9).map(function(x){ return '<img alt="사진" loading="lazy" data-path="' + esc(x.path) + '" data-mid="' + x.id + '"' + src(x.path) + '>'; }).join('') + '</div>' + (group.length > 9 ? '<div style="font-size:12.5px;padding:4px 6px;opacity:.75">사진 ' + group.length + '장 · 눌러서 모두 보기</div>' : '') + '</div>';
+  if (g.kind === 'text') return '<div class="b" data-id="' + g.id + '">' + q + textHtml(g.body) + '</div>';
+  if (g.kind === 'photo') return '<div class="b media" data-id="' + g.id + '">' + q + '<img alt="사진" loading="lazy" data-path="' + esc(g.path) + '" data-mid="' + g.id + '"' + src(g.path) + ' style="min-width:120px;min-height:90px"></div>';
+  if (g.kind === 'video') return '<div class="b media" data-id="' + g.id + '">' + q + '<video controls playsinline preload="metadata" data-path="' + esc(g.path) + '"' + src(g.path) + '></video></div>';
+  if (g.kind === 'voice') return '<div class="b media" data-id="' + g.id + '">' + q + '<div class="voice"><b>🎤 음성 메시지 ' + mmss(g.secs) + '</b><audio controls preload="none" data-path="' + esc(g.path) + '"' + src(g.path) + '></audio></div></div>';
+  if (g.kind === 'audio') return '<div class="b media" data-id="' + g.id + '">' + q + '<div class="voice"><b>🎵 ' + esc(g.fname || '음원') + '</b><audio controls preload="none" data-path="' + esc(g.path) + '"' + src(g.path) + '></audio></div></div>';
+  return '<div class="b media" data-id="' + g.id + '">' + q + '<a class="file" data-path="' + esc(g.path) + '" data-dl="' + esc(g.fname || '파일') + '"' + (URLS[g.path] ? ' href="' + esc(URLS[g.path]) + '"' : '') + ' target="_blank" rel="noopener">📎 <span>' + esc(g.fname || '파일') + '<br><small style="opacity:.75;font-weight:600">' + DT.size(g.size) + '</small></span></a></div>';
 }
-function render(keepBottom){
-  var L = $('list'), atBottom = L.scrollHeight - L.scrollTop - L.clientHeight < 120, oldH = L.scrollHeight, oldTop = L.scrollTop;
-  var h = [], prevDay = '', prev = null;
-  if (FIRST !== null && MSGS.length >= 50 && MSGS[0] && MSGS[0].id > 1) h.push('<button class="more" type="button" id="bMore">이전 글 더 보기</button>');
-  MSGS.forEach(function(g){
-    var d = new Date(g.t).toDateString();
+function left(exp){ var s = (new Date(exp) - Date.now()) / 1000; if (s <= 0) return '곧 사라짐'; if (s < 3600) return Math.ceil(s / 60) + '분 뒤 사라짐'; if (s < 86400) return Math.ceil(s / 3600) + '시간 뒤 사라짐'; return Math.ceil(s / 86400) + '일 뒤 사라짐'; }
+function visible(){ var now = Date.now(); return MSGS.filter(function(g){ return !g.exp || new Date(g.exp) > now; }); }
+function render(keep){
+  var L = $('list'), atBottom = L.scrollHeight - L.scrollTop - L.clientHeight < 140, oldH = L.scrollHeight, oldTop = L.scrollTop;
+  var list = visible(), h = [], prevDay = '', prev = null;
+  if (FIRST !== null && MSGS.length >= 50) h.push('<button class="more" type="button" id="bMore">이전 글 더 보기</button>');
+  for (var i = 0; i < list.length; i++) {
+    var g = list[i], d = new Date(g.t).toDateString();
     if (d !== prevDay) { h.push('<div class="day">' + esc(DT.day(g.t)) + '</div>'); prevDay = d; prev = null; }
-    if (g.kind === 'system') { h.push('<div class="sys">' + esc(g.body) + '</div>'); prev = null; return; }
+    if (g.kind === 'system') { h.push('<div class="sys">' + esc(g.body) + '</div>'); prev = null; continue; }
+    /* 같은 사람이 2분 안에 연달아 보낸 사진(답장 · 사라짐 없는 것)은 한 덩어리로 */
+    var group = null;
+    if (g.kind === 'photo' && !g.deleted && !g.reply && !g.exp) {
+      var j = i + 1; group = [g];
+      while (j < list.length && list[j].kind === 'photo' && list[j].uid === g.uid && !list[j].deleted && !list[j].reply && !list[j].exp && (new Date(list[j].t) - new Date(list[j - 1].t)) < 120000 && new Date(list[j].t).toDateString() === d) { group.push(list[j]); j++; }
+      if (group.length < 2) group = null; else { i = j - 1; }
+    }
+    var last = group ? group[group.length - 1] : g;
     var cont = prev && prev.uid === g.uid && (new Date(g.t) - new Date(prev.t)) < 3 * 60000;
-    var un = unreadOf(g.id), risky = !g.mine && !g.deleted && g.kind === 'text' && RISK.test(g.body || '');
-    h.push('<div class="m' + (g.mine ? ' mine' : '') + (cont ? ' cont' : '') + '">' + (g.mine ? '' : DT.av(g.nick, g.color)) +
+    var un = unreadOf(last.id), risky = !g.mine && !g.deleted && g.kind === 'text' && RISK.test(g.body || ''), yv = !g.deleted && g.kind === 'text' ? ytId(g.body) : null;
+    h.push('<div class="m' + (g.mine ? ' mine' : '') + (cont ? ' cont' : '') + '" id="m' + g.id + '">' + (g.mine ? '' : DT.av(g.nick, g.color)) +
       '<div class="col">' + (g.mine ? '' : '<span class="who">' + esc(g.nick || '나간 사람') + '</span>') +
-      '<div class="ln">' + bubble(g) + '<span class="meta">' + (un > 0 ? '<span class="u">' + un + '</span>' : '') + '<span>' + esc(DT.hm(g.t)) + '</span></span></div>' +
+      '<div class="ln">' + bubble(g, group) + '<span class="meta">' + (g.star ? '<span>⭐</span>' : '') + (g.exp ? '<span class="ex">⏳ ' + esc(left(g.exp)) + '</span>' : '') + (un > 0 ? '<span class="u">' + un + '</span>' : '') + (g.edited ? '<span>수정됨</span>' : '') + '<span>' + esc(DT.hm(last.t)) + '</span></span></div>' +
+      (yv && R && R.live ? '<button class="ytpin" type="button" data-yt="' + esc(yv) + '">📺 위에 띄워 같이 보기</button>' : '') +
       (risky ? '<span class="warn">⚠ 링크 · 계좌번호는 한 번 더 확인하세요. 돈 이야기는 직접 통화로 확인하세요.</span>' : '') + '</div></div>');
-    prev = g;
-  });
-  if (!MSGS.length) h.push('<p class="sys">아직 글이 없어요. 첫 인사를 남겨 보세요!</p>');
+    prev = last;
+  }
+  if (!list.length) h.push('<p class="sys">아직 글이 없어요. 첫 인사를 남겨 보세요!</p>');
   $('inner').innerHTML = h.join('');
-  if (keepBottom === 'top') L.scrollTop = L.scrollHeight - oldH + oldTop;
-  else if (keepBottom || atBottom) L.scrollTop = L.scrollHeight;
+  if (keep === 'top') L.scrollTop = L.scrollHeight - oldH + oldTop;
+  else if (keep === true || atBottom) L.scrollTop = L.scrollHeight;
+  else if (keep === 'stay') L.scrollTop = oldTop;
   var m = $('bMore'); if (m) m.onclick = older;
   signAll();
 }
 async function signAll(){
   var need = [];
   document.querySelectorAll('[data-path]').forEach(function(el){ var p = el.getAttribute('data-path'); if (p && !URLS[p] && need.indexOf(p) < 0) need.push(p); });
-  if (!need.length) return;
-  try {
-    var r = await DT.sb.storage.from('dantok').createSignedUrls(need, 3600);
-    (r.data || []).forEach(function(x){ if (x.signedUrl) URLS[x.path] = x.signedUrl; });
-  } catch (e) {}
+  if (need.length) {
+    try { var r = await DT.sb.storage.from('dantok').createSignedUrls(need, 3600); (r.data || []).forEach(function(x){ if (x.signedUrl) URLS[x.path] = x.signedUrl; }); } catch (e) {}
+  }
   document.querySelectorAll('[data-path]').forEach(function(el){
     var u = URLS[el.getAttribute('data-path')]; if (!u) return;
     if (el.tagName === 'A') { if (!el.getAttribute('href')) el.href = u; } else if (!el.getAttribute('src')) el.src = u;
@@ -166,11 +254,19 @@ async function signAll(){
 }
 
 /* ---------- 글 가져오기 ---------- */
-async function first(){
+async function first(keep){
   var r = await DT.rpc('dt_msgs', { p_room: ROOM, p_after: null, p_before: null });
   if (!r.ok) return;
   MSGS = r.msgs; READS = r.reads; FIRST = MSGS.length ? MSGS[0].id : 0; LAST = MSGS.length ? MSGS[MSGS.length - 1].id : 0;
-  render(true); markRead();
+  render(keep === undefined ? true : keep); markRead();
+}
+/* 화면에 있는 글을 통째로 다시 (고침 · 지움 · 차단 뒤) */
+async function reloadShown(){
+  if (!MSGS.length) return first();
+  var r = await DT.rpc('dt_msgs', { p_room: ROOM, p_after: MSGS[0].id - 1, p_before: null });
+  if (!r.ok) return;
+  MSGS = r.msgs; READS = r.reads; LAST = MSGS.length ? MSGS[MSGS.length - 1].id : LAST;
+  render('stay');
 }
 async function newer(){
   if (busy || document.hidden) return; busy = true;
@@ -178,56 +274,113 @@ async function newer(){
     var r = await DT.rpc('dt_msgs', { p_room: ROOM, p_after: LAST, p_before: null });
     if (r.ok) {
       var changed = JSON.stringify(r.reads) !== JSON.stringify(READS); READS = r.reads;
-      if (r.msgs.length) {
-        var sys = r.msgs.some(function(g){ return g.kind === 'system'; });
-        MSGS = MSGS.concat(r.msgs.filter(function(g){ return g.id > LAST; })); LAST = MSGS[MSGS.length - 1].id;
+      var add = r.msgs.filter(function(g){ return g.id > LAST; });
+      if (add.length) {
+        var sys = add.some(function(g){ return g.kind === 'system'; });
+        MSGS = MSGS.concat(add); LAST = MSGS[MSGS.length - 1].id;
+        if (add.some(function(g){ return !g.mine; })) subLine();
         render(); markRead(); if (sys) loadRoom();
-      } else if (changed) render();
+      } else if (changed) render('stay');
     } else if (r.error === 'not_member') { await loadRoom(); }
   } catch (e) {}
   busy = false;
 }
 async function older(){
-  if (!MSGS.length) return;
+  if (!MSGS.length) return false;
   var r = await DT.rpc('dt_msgs', { p_room: ROOM, p_after: null, p_before: MSGS[0].id });
-  if (!r.ok) return;
-  MSGS = r.msgs.concat(MSGS); if (!r.msgs.length) FIRST = null;
-  render('top');
+  if (!r.ok) return false;
+  MSGS = r.msgs.concat(MSGS); if (r.msgs.length < 50) FIRST = null;
+  render('top'); return r.msgs.length > 0;
 }
-function markRead(){ if (!document.hidden && LAST) DT.rpc('dt_read', { p_room: ROOM, p_last: LAST }).catch(function(){}); }
-function startPoll(){ stopPoll(); poll = setInterval(newer, 4000); }
+var readT = null;
+function markRead(){ clearTimeout(readT); readT = setTimeout(function(){ if (!document.hidden && LAST) DT.rpc('dt_read', { p_room: ROOM, p_last: LAST }).then(function(){ ping('read'); }).catch(function(){}); }, 400); }
+function startPoll(){ stopPoll(); poll = setInterval(function(){ newer(); tickExp(); }, LIVE ? 20000 : 4000); }
 function stopPoll(){ if (poll) clearInterval(poll); poll = null; }
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) { newer(); startPoll(); } else stopPoll(); });
+function tickExp(){ if (MSGS.some(function(g){ return g.exp; })) render('stay'); }
+
+/* ---------- 실시간 (채널 dt-방번호: 새 글 · 입력 중 · 바뀜 · 읽음 · 방 정보) ---------- */
+async function listen(){
+  try {
+    await DT.ready();
+    var s = (await DT.sb.auth.getSession()).data.session; if (s) DT.sb.realtime.setAuth(s.access_token);
+    if (CH) { try { DT.sb.removeChannel(CH); } catch (e) {} }
+    CH = DT.sb.channel('dt-' + ROOM, { config: { broadcast: { self: false } } });
+    CH.on('broadcast', { event: 'new' }, function(){ newer(); });
+    CH.on('broadcast', { event: 'read' }, function(){ newer(); });
+    CH.on('broadcast', { event: 'change' }, function(){ reloadShown(); });
+    CH.on('broadcast', { event: 'room' }, function(){ loadRoom(); newer(); });
+    CH.on('broadcast', { event: 'typing' }, function(e){ if (e.payload && e.payload.nick) subLine(e.payload.nick); });
+    CH.subscribe(function(st){ var was = LIVE; LIVE = st === 'SUBSCRIBED'; if (was !== LIVE && poll) startPoll(); });
+  } catch (e) { LIVE = false; }
+}
+function ping(ev, payload){ try { if (CH && LIVE) CH.send({ type: 'broadcast', event: ev, payload: payload || {} }); } catch (e) {} }
+var lastTyping = 0;
+function typing(){ var n = Date.now(); if (n - lastTyping > 2000 && ME) { lastTyping = n; ping('typing', { nick: ME.nick }); } }
 
 /* ---------- 보내기 ---------- */
 var T = $('txt');
 function grow(){ T.style.height = 'auto'; T.style.height = Math.min(140, T.scrollHeight + 2) + 'px'; $('bSend').disabled = !T.value.trim(); }
-T.addEventListener('input', grow);
+T.addEventListener('input', function(){ grow(); if (T.value) typing(); });
 T.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && window.matchMedia('(pointer:fine)').matches) { e.preventDefault(); send(); } });
 $('bSend').onclick = send;
 async function send(){
   var v = T.value.trim(); if (!v) return;
   $('bSend').disabled = true;
   try {
-    var r = await DT.rpc('dt_send', { p_room: ROOM, p_kind: 'text', p_body: v, p_path: null, p_name: null, p_size: null });
+    if (editing) {
+      var e1 = await DT.rpc('dt_edit_msg', { p_room: ROOM, p_id: editing.id, p_body: v });
+      if (!e1.ok) throw e1.error;
+      editing.body = v; editing.edited = true; clearCtx(); T.value = ''; grow(); render('stay'); ping('change'); return;
+    }
+    var r = await DT.rpc('dt_send', { p_room: ROOM, p_kind: 'text', p_body: v, p_path: null, p_name: null, p_size: null, p_reply: replyTo ? replyTo.id : null, p_ttl: TTL, p_secs: null });
     if (!r.ok) throw r.error;
-    T.value = ''; grow(); await newer(); $('list').scrollTop = $('list').scrollHeight; notify(r.id);
+    T.value = ''; grow(); clearCtx(); await newer(); $('list').scrollTop = $('list').scrollHeight; after(r.id);
   } catch (e) { DT.toast(DT.errText(e)); $('bSend').disabled = false; }
 }
-function notify(id){
-  /* 알림은 단톡방 앱 서버 함수(dantok-notify)가 보냅니다. 함수가 아직 없으면 조용히 넘어갑니다. */
+function after(id){
+  ping('new');
+  /* 휴대폰 알림은 dantok-notify 함수가 보냅니다. 함수가 아직 없으면 조용히 넘어갑니다. */
   DT.sb.functions.invoke('dantok-notify', { body: { msg: id } }).catch(function(){});
 }
+function setCtx(text){ $('ctx').hidden = false; $('ctxT').innerHTML = text; }
+function clearCtx(){ replyTo = null; if (editing) { editing = null; T.value = ''; grow(); } $('ctx').hidden = true; }
+$('ctxX').onclick = clearCtx;
 
+/* 이모티콘 */
+var EMO = '😀 😂 🥹 😊 😍 🥰 😘 😉 😎 🤗 🤔 😅 😭 😢 😡 😱 👍 👏 🙏 💪 👌 ✌️ 🤝 🙌 ❤️ 🧡 💛 💚 💙 💜 🎉 🎂 🌸 🌹 ☕ 🍚 🍻 🎁 ✅ ⭕ ❌ ❓ ❗ 🔥 ⭐ 🌙 ☀️ 🌧'.split(' ');
+$('bEmo').onclick = function(){
+  var e = $('emo'); e.hidden = !e.hidden;
+  if (!e.hidden && !e.firstChild) { e.innerHTML = EMO.map(function(x){ return '<button type="button">' + x + '</button>'; }).join(''); e.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ var s = T.selectionStart || T.value.length; T.value = T.value.slice(0, s) + b.textContent + T.value.slice(T.selectionEnd || s); T.focus(); T.selectionStart = T.selectionEnd = s + b.textContent.length; grow(); }; }); }
+};
+
+/* 사라지는 메시지 */
+var TTL_W = { 1: '1시간', 24: '하루', 168: '일주일' };
+function paintTtl(){ $('bTtl').classList.toggle('on', !!TTL); $('bTtl').textContent = TTL ? '⌛' : '⏳'; T.placeholder = TTL ? '⏳ ' + TTL_W[TTL] + ' 뒤 사라지는 글' : '글을 적어 주세요'; }
+$('bTtl').onclick = function(){
+  var s = DT.sheet('<h3>⏳ 사라지는 메시지</h3><p class="hint">지금부터 보내는 글 · 사진이 정한 시간 뒤에 모두의 화면과 서버에서 지워져요. 받는 사람에게도 「사라짐」이 표시돼요.</p>' +
+    [[null, '끄기 (그대로 남기기)'], [1, '1시간 뒤 사라짐'], [24, '하루 뒤 사라짐'], [168, '일주일 뒤 사라짐']].map(function(x){ return '<button class="btn ' + (TTL === x[0] ? '' : 'g') + '" type="button" data-t="' + x[0] + '">' + x[1] + '</button>'; }).join('') +
+    '<p class="hint">⚠ 받은 사람이 화면을 캡처하는 것까지는 막을 수 없어요.</p>');
+  s.el.querySelectorAll('[data-t]').forEach(function(b){ b.onclick = function(){ var v = b.getAttribute('data-t'); TTL = v === 'null' ? null : +v; paintTtl(); s.close(); DT.toast(TTL ? TTL_W[TTL] + ' 뒤 사라지게 보내요.' : '사라지는 메시지를 껐어요.'); }; });
+};
+
+/* 보내기 메뉴 */
 $('bPlus').onclick = function(){
+  $('emo').hidden = true;
   var s = DT.sheet('<h3>보내기</h3>' +
-    '<button class="btn g" type="button" id="pMedia">🖼 사진 · 동영상</button>' +
-    '<button class="btn g" type="button" id="pAny">📎 음원 · 파일</button>' +
-    '<p class="hint">한 번에 100MB까지 보낼 수 있어요. 사진은 보기 좋은 크기로 줄여서 보냅니다.</p>');
+    '<div class="row"><button class="btn g" type="button" id="pCam">📷 바로 찍기</button><button class="btn g" type="button" id="pMedia">🖼 사진 · 동영상</button></div>' +
+    '<div class="row"><button class="btn g" type="button" id="pVoice">🎤 음성 메시지</button><button class="btn g" type="button" id="pAny">📎 음원 · 파일</button></div>' +
+    '<div class="row"><button class="btn g" type="button" id="pMusic">🎵 같이 듣기</button><button class="btn g" type="button" id="pYt">📺 유튜브 같이 보기</button></div>' +
+    '<p class="hint">사진은 여러 장을 한 번에 고를 수 있어요. 한 번에 100MB까지 보낼 수 있어요.' + (TTL ? ' 지금은 ⏳ ' + TTL_W[TTL] + ' 뒤 사라지게 보내요.' : '') + '</p>');
+  $('pCam').onclick = function(){ s.close(); $('fCam').click(); };
   $('pMedia').onclick = function(){ s.close(); $('fMedia').click(); };
   $('pAny').onclick = function(){ s.close(); $('fAny').click(); };
+  $('pVoice').onclick = function(){ s.close(); record(); };
+  $('pMusic').onclick = function(){ s.close(); pickSong(); };
+  $('pYt').onclick = function(){ s.close(); askYt(); };
 };
-$('fMedia').onchange = function(){ var f = this.files[0]; this.value = ''; if (f) upload(f); };
+$('fMedia').onchange = async function(){ var fs = Array.from(this.files); this.value = ''; for (var i = 0; i < fs.length && i < 30; i++) await upload(fs[i], i < fs.length - 1); };
+$('fCam').onchange = function(){ var f = this.files[0]; this.value = ''; if (f) upload(f); };
 $('fAny').onchange = function(){ var f = this.files[0]; this.value = ''; if (f) upload(f); };
 
 function shrink(file){
@@ -244,53 +397,218 @@ function shrink(file){
   });
 }
 function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); }
-async function upload(file){
-  var t = file.type || '', kind = /^image\//.test(t) && !/gif|svg/.test(t) ? 'photo' : /^video\//.test(t) ? 'video' : /^audio\//.test(t) ? 'audio' : 'file';
-  var blob = file, ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'bin';
+async function upload(file, more, kindIn, secs){
+  var t = file.type || '', kind = kindIn || (/^image\//.test(t) && !/gif|svg/.test(t) ? 'photo' : /^video\//.test(t) ? 'video' : /^audio\//.test(t) ? 'audio' : 'file');
+  var blob = file, name = file.name || '음성 메시지', ext = (name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'bin';
   if (kind === 'photo') { blob = await shrink(file); ext = 'jpg'; t = 'image/jpeg'; }
+  if (kind === 'voice') ext = /mp4|m4a|aac/.test(t) ? 'm4a' : /ogg/.test(t) ? 'ogg' : 'webm';
   if (blob.size > 104857600) { DT.toast(DT.ERR.too_big); return; }
-  var left = R.quota_bytes - R.used_bytes; if (blob.size > left) { DT.toast(DT.ERR.quota); return; }
+  if (blob.size > R.quota_bytes - R.used_bytes) { DT.toast(DT.ERR.quota); return; }
   DT.toast(kind === 'video' ? '동영상을 올리는 중이에요… 잠시만요' : '올리는 중이에요…');
   var path = ROOM + '/' + uid() + '.' + ext;
   try {
     var up = await DT.sb.storage.from('dantok').upload(path, blob, { contentType: t || 'application/octet-stream', upsert: false });
     if (up.error) throw up.error;
-    var r = await DT.rpc('dt_send', { p_room: ROOM, p_kind: kind, p_body: null, p_path: path, p_name: file.name.slice(0, 120), p_size: blob.size });
+    var r = await DT.rpc('dt_send', { p_room: ROOM, p_kind: kind, p_body: null, p_path: path, p_name: name.slice(0, 120), p_size: blob.size, p_reply: replyTo ? replyTo.id : null, p_ttl: TTL, p_secs: secs || null });
     if (!r.ok) throw r.error;
-    R.used_bytes += blob.size; await newer(); $('list').scrollTop = $('list').scrollHeight; notify(r.id);
+    R.used_bytes += blob.size; replyTo = null; $('ctx').hidden = true;
+    if (!more) { await newer(); $('list').scrollTop = $('list').scrollHeight; }
+    after(r.id);
   } catch (e) { DT.toast(DT.errText(e)); }
 }
 
-/* ---------- 글 누르기: 크게 보기 · 복사 · 지우기 · 신고 · 차단 ---------- */
+/* 음성 메시지: 녹음 → 보내기 (최대 5분) */
+var REC = null;
+async function record(){
+  if (!navigator.mediaDevices || !window.MediaRecorder) { DT.toast('이 휴대폰에서는 녹음을 쓸 수 없어요.'); return; }
+  var stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { DT.toast('마이크를 쓸 수 있게 허용해 주세요.'); return; }
+  var mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find(function(m){ return MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m); }) || '';
+  var rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), parts = [], t0 = Date.now();
+  REC = { rec: rec, stream: stream, timer: setInterval(function(){ var s = (Date.now() - t0) / 1000; $('recT').textContent = '녹음 중 ' + mmss(s); if (s >= 300) stopRec(true); }, 250) };
+  rec.ondataavailable = function(e){ if (e.data && e.data.size) parts.push(e.data); };
+  rec.onstop = function(){
+    clearInterval(REC.timer); stream.getTracks().forEach(function(x){ x.stop(); }); $('rec').hidden = true; $('cin').hidden = false;
+    var secs = Math.round((Date.now() - t0) / 1000), go = REC.send; REC = null;
+    if (!go) return;
+    if (secs < 1) { DT.toast('너무 짧아요.'); return; }
+    var b = new Blob(parts, { type: rec.mimeType || mime || 'audio/webm' });
+    upload(new File([b], '음성 메시지', { type: b.type }), false, 'voice', secs);
+  };
+  $('recT').textContent = '녹음 중 0:00'; $('rec').hidden = false; $('cin').hidden = true; $('emo').hidden = true;
+  rec.start(500);
+}
+function stopRec(go){ if (!REC) return; REC.send = go; try { REC.rec.stop(); } catch (e) {} }
+$('recX').onclick = function(){ stopRec(false); };
+$('recGo').onclick = function(){ stopRec(true); };
+
+/* ---------- 글 누르기 ---------- */
 $('inner').addEventListener('click', function(e){
+  var yb = e.target.closest('[data-yt]'); if (yb) { shareYt(yb.getAttribute('data-yt')); return; }
+  var j = e.target.closest('[data-jump]'); if (j) { jumpTo(+j.getAttribute('data-jump')); return; }
+  var a = e.target.closest('a.file'); if (a) { if (!a.getAttribute('href')) e.preventDefault(); return; }
   if (e.target.closest('a, video, audio')) return;
   var img = e.target.closest('img[data-path]');
-  if (img && img.src) { var v = document.createElement('div'); v.className = 'view'; v.innerHTML = '<img alt="사진" src="' + esc(img.src) + '"><button type="button" aria-label="닫기">✕</button>'; v.onclick = function(){ v.remove(); }; document.body.appendChild(v); return; }
+  if (img) { viewer(+img.getAttribute('data-mid')); return; }
   var b = e.target.closest('.b[data-id]'); if (!b) return;
   var g = MSGS.find(function(x){ return String(x.id) === b.getAttribute('data-id'); }); if (!g || g.deleted) return;
   msgMenu(g);
 });
+/* 꾹 누르면 메뉴 (사진 묶음에서 한 장만 고를 때도) */
+var pressT = null;
+$('inner').addEventListener('touchstart', function(e){
+  var el = e.target.closest('img[data-mid]'); if (!el) return;
+  pressT = setTimeout(function(){ pressT = null; var g = MSGS.find(function(x){ return x.id === +el.getAttribute('data-mid'); }); if (g) msgMenu(g); }, 550);
+}, { passive: true });
+['touchend', 'touchmove'].forEach(function(ev){ $('inner').addEventListener(ev, function(){ if (pressT) { clearTimeout(pressT); pressT = null; } }, { passive: true }); });
+$('inner').addEventListener('contextmenu', function(e){ var el = e.target.closest('img[data-mid]'); if (el) e.preventDefault(); });
+
 function msgMenu(g){
   var canDel = g.mine || (R && R.owner);
   var s = DT.sheet('<h3>' + (g.mine ? '내 글' : esc(g.nick || '') + '님의 글') + '</h3>' +
+    (R.live ? '<button class="btn g" type="button" id="mRe">↩ 답장</button>' : '') +
     (g.kind === 'text' ? '<button class="btn g" type="button" id="mCopy">📋 복사</button>' : '') +
+    (g.mine && g.kind === 'text' && R.live ? '<button class="btn g" type="button" id="mEdit">✏️ 고치기</button>' : '') +
+    (g.path && /photo|video|voice|audio|file/.test(g.kind) ? '<button class="btn g" type="button" id="mSave">⬇ 저장</button>' : '') +
+    '<button class="btn g" type="button" id="mStar">' + (g.star ? '⭐ 즐겨찾기 빼기' : '⭐ 즐겨찾기') + '</button>' +
     (canDel ? '<button class="btn g" type="button" id="mDel">🗑 지우기</button>' : '') +
     (!g.mine ? '<button class="btn g" type="button" id="mRep">🚩 이 글 신고</button><button class="btn red" type="button" id="mBlk">🚫 ' + esc(g.nick || '') + '님 차단</button>' : ''));
+  if ($('mRe')) $('mRe').onclick = function(){ s.close(); editing = null; replyTo = g; setCtx('↩ <b>' + esc(g.nick || '') + '</b>에게 답장: ' + esc(g.kind === 'text' ? g.body : kindWord(g.kind))); T.focus(); };
   if ($('mCopy')) $('mCopy').onclick = function(){ DT.copy(g.body); s.close(); };
+  if ($('mEdit')) $('mEdit').onclick = function(){ s.close(); replyTo = null; editing = g; T.value = g.body; grow(); setCtx('✏️ 글 고치는 중'); T.focus(); };
+  if ($('mSave')) $('mSave').onclick = function(){ s.close(); save(g); };
+  $('mStar').onclick = async function(){ var r = await DT.rpc('dt_star', { p_room: ROOM, p_id: g.id, p_on: !g.star }); s.close(); if (!r.ok) return DT.toast(DT.errText(r.error)); g.star = !g.star; render('stay'); DT.toast(g.star ? '즐겨찾기에 넣었어요. 메뉴(☰)에서 모아 볼 수 있어요.' : '즐겨찾기에서 뺐어요.'); };
   if ($('mDel')) $('mDel').onclick = twice('한 번 더 누르면 지워요', async function(){
     var r = await DT.rpc('dt_delete_msg', { p_room: ROOM, p_id: g.id }); s.close();
     if (!r.ok) return DT.toast(DT.errText(r.error));
-    g.deleted = true; render(); DT.toast('지웠어요.');
+    g.deleted = true; render('stay'); ping('change'); DT.toast('지웠어요.');
   });
   if ($('mRep')) $('mRep').onclick = function(){ s.close(); report(g.id, g.uid); };
-  if ($('mBlk')) $('mBlk').onclick = twice('한 번 더 누르면 차단해요', async function(){ await DT.rpc('dt_block', { p_user: g.uid, p_on: true }); s.close(); DT.toast('차단했어요. 이제 이 사람의 글이 보이지 않아요.'); first(); loadRoom(); });
+  if ($('mBlk')) $('mBlk').onclick = twice('한 번 더 누르면 차단해요', async function(){ await DT.rpc('dt_block', { p_user: g.uid, p_on: true }); s.close(); DT.toast('차단했어요. 이제 이 사람의 글이 보이지 않아요.'); reloadShown(); loadRoom(); });
 }
-function twice(msg, fn){ var armed = false; return async function(){ if (!armed) { armed = true; this.dataset.t = this.textContent; this.textContent = msg; return; } this.disabled = true; try { await fn.call(this); } catch (e) { DT.toast(DT.errText(e)); } }; }
+async function save(g){
+  try {
+    var r = await DT.sb.storage.from('dantok').createSignedUrl(g.path, 600, { download: g.fname || (g.kind === 'photo' ? '사진.jpg' : '파일') });
+    if (r.error || !r.data) throw r.error;
+    var a = document.createElement('a'); a.href = r.data.signedUrl; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) { DT.toast('저장하지 못했어요.'); }
+}
+function twice(msg, fn){ var armed = false; return async function(){ if (!armed) { armed = true; this.textContent = msg; return; } this.disabled = true; try { await fn.call(this); } catch (e) { DT.toast(DT.errText(e)); } }; }
 function report(msgId, target){
   var s = DT.sheet('<h3>🚩 신고하기</h3><p class="hint">운영자가 확인해서 방을 멈추거나 사람을 막을 수 있어요. 신고한 사람은 알려지지 않아요.</p>' +
     ['욕설 · 괴롭힘', '사기 · 돈 요구', '광고 · 도배', '음란 · 불법 촬영물', '기타'].map(function(x, i){ return '<button class="btn g" type="button" data-r="' + i + '">' + x + '</button>'; }).join(''));
   s.el.querySelectorAll('[data-r]').forEach(function(b){ b.onclick = async function(){
     try { var r = await DT.rpc('dt_report', { p_room: ROOM, p_msg: msgId, p_target: target, p_reason: b.textContent }); s.close(); DT.toast(r.ok ? '신고했어요. 고맙습니다.' : DT.errText(r.error)); } catch (e) { DT.toast(DT.errText(e)); }
+  }; });
+}
+
+/* 사진 크게 보기 (좌우로 넘기기 · 저장) */
+function viewer(mid){
+  var photos = visible().filter(function(g){ return g.kind === 'photo' && !g.deleted && g.path; }), i = photos.findIndex(function(g){ return g.id === mid; });
+  if (i < 0) return;
+  var v = document.createElement('div'); v.className = 'view';
+  function show(){ var g = photos[i]; v.innerHTML = '<img alt="사진" src="' + esc(URLS[g.path] || '') + '"><div class="vb"><button type="button" data-a="save">⬇ 저장</button><button type="button" data-a="x" aria-label="닫기">✕</button></div>' + (i > 0 ? '<button class="nav l" type="button" data-a="l">‹</button>' : '') + (i < photos.length - 1 ? '<button class="nav r" type="button" data-a="r">›</button>' : ''); }
+  v.onclick = function(e){ var a = e.target.getAttribute('data-a'); if (a === 'l') { i--; show(); } else if (a === 'r') { i++; show(); } else if (a === 'save') save(photos[i]); else v.remove(); };
+  var x0 = null; v.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive: true });
+  v.addEventListener('touchend', function(e){ if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null; if (dx > 60 && i > 0) { i--; show(); } else if (dx < -60 && i < photos.length - 1) { i++; show(); } }, { passive: true });
+  show(); document.body.appendChild(v);
+}
+
+/* 글로 이동 (답장 인용 · 검색 · 즐겨찾기) */
+async function jumpTo(id){
+  for (var k = 0; k < 20 && !MSGS.some(function(g){ return g.id === id; }); k++) { if (!(await older())) break; }
+  var el = $('m' + id) || (function(){ var b = document.querySelector('[data-mid="' + id + '"]'); return b && b.closest('.m'); })();
+  if (!el) { DT.toast('사라졌거나 지워진 글이에요.'); return; }
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('flash'); setTimeout(function(){ el.classList.remove('flash'); }, 1600);
+}
+function hit(s, q){ var t = esc(s || ''); if (!q) return t; var i = t.toLowerCase().indexOf(esc(q).toLowerCase()); return i < 0 ? t : t.slice(0, i) + '<mark>' + t.slice(i, i + esc(q).length) + '</mark>' + t.slice(i + esc(q).length); }
+function resultList(msgs, q){
+  if (!msgs.length) return '<p class="hint">없어요.</p>';
+  return '<div class="res">' + msgs.map(function(g){ return '<button type="button" data-go="' + g.id + '">' + (g.kind === 'text' ? hit(g.body, q) : kindWord(g.kind) + ' ' + hit(g.fname || '', q)) + '<small>' + esc(g.nick || '') + ' · ' + esc(DT.when(g.t)) + '</small></button>'; }).join('') + '</div>';
+}
+$('bFind').onclick = function(){
+  var s = DT.sheet('<h3>🔍 대화 검색</h3><label>찾을 말 · 별명 · 파일 이름<input id="sq" maxlength="40" enterkeyhint="search"></label><div id="sr"></div>');
+  var tm = null;
+  $('sq').oninput = function(){ clearTimeout(tm); tm = setTimeout(go, 350); };
+  $('sq').onkeydown = function(e){ if (e.key === 'Enter') go(); };
+  $('sq').focus();
+  async function go(){
+    var q = $('sq').value.trim(); if (!q) { $('sr').innerHTML = ''; return; }
+    var r = await DT.rpc('dt_search', { p_room: ROOM, p_q: q }); if (!r.ok) return;
+    $('sr').innerHTML = resultList(r.msgs, q);
+    $('sr').querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){ s.close(); jumpTo(+b.getAttribute('data-go')); }; });
+  }
+};
+async function stars(){
+  var r = await DT.rpc('dt_stars', { p_room: ROOM }); if (!r.ok) return;
+  var s = DT.sheet('<h3>⭐ 즐겨찾기</h3>' + resultList(r.msgs, ''));
+  s.el.querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){ s.close(); jumpTo(+b.getAttribute('data-go')); }; });
+}
+
+/* ---------- 📺 유튜브 같이 보기 ---------- */
+var ytHidden = null, ytBig = false;
+try { ytHidden = sessionStorage.getItem('dt_yt_hide_' + ROOM); } catch (e) {}
+function ytEmbed(v){ return v.indexOf('L:') === 0 ? 'https://www.youtube-nocookie.com/embed/videoseries?list=' + v.slice(2) + '&playsinline=1&rel=0' : 'https://www.youtube-nocookie.com/embed/' + v + '?playsinline=1&rel=0'; }
+function ytWatch(v){ return v.indexOf('L:') === 0 ? 'https://www.youtube.com/playlist?list=' + v.slice(2) : 'https://www.youtube.com/watch?v=' + v; }
+function paintYt(){
+  var y = R && R.yt, box = $('yt');
+  if (!y) { box.hidden = true; box.innerHTML = ''; $('ytStrip').hidden = true; return; }
+  var key = y.v + '@' + y.at;
+  if (ytHidden === key) { box.hidden = true; box.innerHTML = ''; $('ytStrip').hidden = false; return; }
+  $('ytStrip').hidden = true; box.hidden = false; box.classList.toggle('big', ytBig);
+  if (box.getAttribute('data-k') === key) return;
+  box.setAttribute('data-k', key);
+  var canClear = R.owner || y.by === R.me_id;
+  box.innerHTML = '<div class="yf"><iframe src="' + esc(ytEmbed(y.v)) + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="유튜브"></iframe></div>' +
+    '<div class="yc"><span class="yl">📺 ' + esc(y.nick || '') + '님이 띄운 영상</span><button type="button" data-y="big">⤢ 크게</button><a href="' + esc(ytWatch(y.v)) + '" target="_blank" rel="noopener" style="color:#EEF2F7;font-size:12.5px;font-weight:700">↗ 앱</a><button type="button" data-y="hide">✕ 닫기</button>' + (canClear ? '<button type="button" data-y="clear">⬇ 모두 내리기</button>' : '') + '</div>';
+  box.querySelectorAll('[data-y]').forEach(function(b){ b.onclick = async function(){
+    var a = b.getAttribute('data-y');
+    if (a === 'big') { ytBig = !ytBig; box.classList.toggle('big', ytBig); }
+    if (a === 'hide') { ytHidden = key; try { sessionStorage.setItem('dt_yt_hide_' + ROOM, key); } catch (e) {} paintYt(); }
+    if (a === 'clear') { var r = await DT.rpc('dt_set_yt', { p_room: ROOM, p_v: null }); if (!r.ok) return DT.toast(DT.errText(r.error)); await loadRoom(); ping('room'); }
+  }; });
+}
+$('ytStrip').onclick = function(){ ytHidden = null; try { sessionStorage.removeItem('dt_yt_hide_' + ROOM); } catch (e) {} $('yt').removeAttribute('data-k'); paintYt(); };
+async function shareYt(v){
+  var r = await DT.rpc('dt_set_yt', { p_room: ROOM, p_v: v });
+  if (!r.ok) return DT.toast(r.error === 'bad_video' ? '유튜브 주소가 아니에요.' : DT.errText(r.error));
+  ytHidden = null; $('yt').removeAttribute('data-k'); await loadRoom(); newer(); ping('room');
+}
+function askYt(){
+  var s = DT.sheet('<h3>📺 유튜브 같이 보기</h3><label>유튜브 주소 붙여넣기<input id="yu" placeholder="https://youtu.be/…" inputmode="url"></label><p class="hint">방 사람 모두의 대화창 위에 영상이 걸려요. 각자 ▶를 눌러 봐요.</p><button class="btn" type="button" id="yGo">위에 띄우기</button>');
+  $('yGo').onclick = function(){ var v = ytId($('yu').value); if (!v) return DT.toast('유튜브 주소가 아니에요.'); s.close(); shareYt(v); };
+}
+
+/* ---------- 🎵 같이 듣기 (회사가 고른 곡만) ---------- */
+var P = $('player'), playing = false;
+function paintMusic(){
+  var m = R && R.music, bar = $('mu');
+  if (!m) { bar.hidden = true; if (playing) { P.pause(); playing = false; } P.removeAttribute('data-k'); return; }
+  var key = m.path + '@' + m.at, canStop = R.owner || m.by === R.me_id;
+  if (P.getAttribute('data-k') !== key) { P.setAttribute('data-k', key); P.src = DT.songUrl(m.path); P.loop = true; if (playing) syncPlay(); }
+  bar.hidden = false;
+  bar.innerHTML = '<span class="ml">🎵 ' + esc(m.title || '') + (m.artist ? ' · ' + esc(m.artist) : '') + ' <small style="opacity:.7">(' + esc(m.nick || '') + '님)</small></span>' +
+    '<button type="button" id="muP">' + (playing ? '⏸ 나만 끄기' : '▶ 같이 듣기') + '</button>' + (canStop ? '<button type="button" id="muS">⏹ 모두 멈추기</button>' : '');
+  $('muP').onclick = function(){ if (playing) { P.pause(); playing = false; paintMusic(); } else syncPlay(); };
+  if ($('muS')) $('muS').onclick = async function(){ var r = await DT.rpc('dt_set_music', { p_room: ROOM, p_track: null }); if (!r.ok) return DT.toast(DT.errText(r.error)); await loadRoom(); ping('room'); };
+}
+function syncPlay(){
+  var m = R && R.music; if (!m) return;
+  var go = function(){ var d = P.duration || m.secs || 0; if (d > 0) { try { P.currentTime = ((Date.now() - new Date(m.at)) / 1000) % d; } catch (e) {} } };
+  if (P.readyState >= 1) go(); else P.addEventListener('loadedmetadata', go, { once: true });
+  P.play().then(function(){ playing = true; paintMusic(); }).catch(function(){ DT.toast('▶를 한 번 더 눌러 주세요.'); });
+}
+async function pickSong(){
+  var s = DT.sheet('<h3>🎵 같이 듣기</h3><p class="hint">저작권 걱정 없는, 회사가 고른 곡 중에서 골라요. 방 사람 모두의 화면 위에 함께 걸려요.</p><div class="songs" id="sl"><p class="hint">곡 목록을 불러오는 중…</p></div>');
+  var list = [];
+  try { list = await DT.songs(); } catch (e) {}
+  if (!list.length) { $('sl').innerHTML = '<p class="hint">곡 목록을 불러오지 못했어요.</p>'; return; }
+  $('sl').innerHTML = list.map(function(x, i){ return '<button type="button" data-i="' + i + '">🎵 <span><b>' + esc(x.title) + '</b><br><small>' + esc(x.artist || '') + (x.seconds ? ' · ' + mmss(x.seconds) : '') + '</small></span></button>'; }).join('');
+  $('sl').querySelectorAll('[data-i]').forEach(function(b){ b.onclick = async function(){
+    var x = list[+b.getAttribute('data-i')];
+    var r = await DT.rpc('dt_set_music', { p_room: ROOM, p_track: { id: x.id, title: x.title, artist: x.artist, path: x.path, secs: x.seconds || null } });
+    s.close(); if (!r.ok) return DT.toast(DT.errText(r.error));
+    await loadRoom(); newer(); ping('room'); syncPlay();
   }; });
 }
 
@@ -307,6 +625,7 @@ function menu(){
     '<span class="sec">초대하기</span><div class="codebig">' + esc(R.code) + '</div>' +
     '<div class="row"><button class="btn sun" type="button" id="iShare">링크 보내기</button><button class="btn g" type="button" id="iQr">QR 보기</button></div>' +
     '<p class="hint">초대받은 사람은 전화번호 없이 코드나 링크로 들어와요. 공기계도 와이파이만 있으면 돼요.</p><div id="qr" hidden></div>' +
+    '<button class="btn g" type="button" id="iStars">⭐ 즐겨찾기 모아 보기</button>' +
     (R.owner ? '<span class="sec">방장 설정</span>' +
       '<label>방 이름<input id="oName" maxlength="30"></label><label>공지 (위에 늘 보여요)<textarea id="oNotice" maxlength="200" rows="2" placeholder="예) 이번 모임은 토요일 6시 · 회비 2만 원"></textarea></label>' +
       '<label>끝나는 날 (선택)<input id="oEnd" type="date"></label>' +
@@ -321,26 +640,27 @@ function menu(){
   $('meNick').value = ME.nick;
   $('iShare').onclick = function(){ DT.share('단톡방 초대', '「' + R.name + '」 단톡방에 초대해요. 전화번호 없이 들어와요. 초대 코드 ' + R.code, link); };
   $('iQr').onclick = function(){ var q = $('qr'); q.hidden = !q.hidden; if (!q.hidden && !q.firstChild) { try { new QRCode(q, { text: link, width: 200, height: 200 }); } catch (e) { q.textContent = link; } } };
+  $('iStars').onclick = function(){ s.close(); stars(); };
   if (R.owner) {
     $('oName').value = R.name; $('oNotice').value = R.notice || ''; $('oEnd').value = R.ends_on || '';
-    $('oSave').onclick = async function(){ var r = await DT.rpc('dt_owner_set', { p_room: ROOM, p_name: $('oName').value, p_notice: $('oNotice').value, p_ends_on: $('oEnd').value || null }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); DT.toast('저장했어요.'); await loadRoom(); newer(); };
+    $('oSave').onclick = async function(){ var r = await DT.rpc('dt_owner_set', { p_room: ROOM, p_name: $('oName').value, p_notice: $('oNotice').value, p_ends_on: $('oEnd').value || null }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); DT.toast('저장했어요.'); await loadRoom(); newer(); ping('room'); };
     $('oCode').onclick = twice('한 번 더 누르면 옛 코드는 못 써요', async function(){ var r = await DT.rpc('dt_new_code', { p_room: ROOM }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); await loadRoom(); DT.toast('새 초대 코드: ' + r.code); });
   }
-  $('meSave').onclick = async function(){ var r = await DT.rpc('dt_set_me', { p_room: ROOM, p_nick: $('meNick').value, p_muted: null }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); DT.toast('별명을 바꿨어요.'); await loadRoom(); first(); };
+  $('meSave').onclick = async function(){ var r = await DT.rpc('dt_set_me', { p_room: ROOM, p_nick: $('meNick').value, p_muted: null }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); DT.toast('별명을 바꿨어요.'); await loadRoom(); reloadShown(); ping('change'); };
   $('meMute').onclick = async function(){ var r = await DT.rpc('dt_set_me', { p_room: ROOM, p_nick: ME.nick, p_muted: !ME.muted }); if (!r.ok) return DT.toast(DT.errText(r.error)); s.close(); await loadRoom(); DT.toast(ME.muted ? '이 방 알림을 껐어요.' : '이 방 알림을 켰어요.'); };
-  $('bLeave').onclick = twice(R.owner && R.members.length > 1 ? '한 번 더 누르면 나가요 (방장은 다음 사람에게)' : '한 번 더 누르면 나가요', async function(){ var r = await DT.rpc('dt_leave', { p_room: ROOM }); if (!r.ok) return DT.toast(DT.errText(r.error)); location.replace('./'); });
+  $('bLeave').onclick = twice(R.owner && R.members.length > 1 ? '한 번 더 누르면 나가요 (방장은 다음 사람에게)' : '한 번 더 누르면 나가요', async function(){ var r = await DT.rpc('dt_leave', { p_room: ROOM }); if (!r.ok) return DT.toast(DT.errText(r.error)); ping('room'); location.replace('./'); });
   s.el.querySelectorAll('[data-act]').forEach(function(b){
     var u = b.getAttribute('data-u'), a = b.getAttribute('data-act'), m = R.members.find(function(x){ return x.uid === u; });
     if (a === 'rep') b.onclick = function(){ s.close(); report(null, u); };
-    if (a === 'blk') b.onclick = async function(){ await DT.rpc('dt_block', { p_user: u, p_on: !m.blocked }); s.close(); await loadRoom(); first(); DT.toast(m.blocked ? '차단을 풀었어요.' : '차단했어요.'); };
-    if (a === 'kick') b.onclick = twice('한 번 더', async function(){ var r = await DT.rpc('dt_kick', { p_room: ROOM, p_user: u }); s.close(); DT.toast(r.ok ? m.nick + '님을 내보냈어요.' : DT.errText(r.error)); await loadRoom(); newer(); });
-    if (a === 'own') b.onclick = twice('한 번 더', async function(){ var r = await DT.rpc('dt_transfer', { p_room: ROOM, p_user: u }); s.close(); DT.toast(r.ok ? m.nick + '님이 새 방장이에요.' : DT.errText(r.error)); await loadRoom(); newer(); });
+    if (a === 'blk') b.onclick = async function(){ await DT.rpc('dt_block', { p_user: u, p_on: !m.blocked }); s.close(); await loadRoom(); reloadShown(); DT.toast(m.blocked ? '차단을 풀었어요.' : '차단했어요.'); };
+    if (a === 'kick') b.onclick = twice('한 번 더', async function(){ var r = await DT.rpc('dt_kick', { p_room: ROOM, p_user: u }); s.close(); DT.toast(r.ok ? m.nick + '님을 내보냈어요.' : DT.errText(r.error)); await loadRoom(); newer(); ping('room'); });
+    if (a === 'own') b.onclick = twice('한 번 더', async function(){ var r = await DT.rpc('dt_transfer', { p_room: ROOM, p_user: u }); s.close(); DT.toast(r.ok ? m.nick + '님이 새 방장이에요.' : DT.errText(r.error)); await loadRoom(); newer(); ping('room'); });
   });
 }
 
 /* ---------- 시작 ---------- */
 (async function(){
-  try { if (await loadRoom()) { await first(); startPoll(); } }
+  try { if (await loadRoom()) { await first(); listen(); startPoll(); } }
   catch (e) { $('inner').innerHTML = '<p class="sys">' + esc(DT.errText(e)) + '</p>'; }
 })();
 })();
