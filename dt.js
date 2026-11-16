@@ -136,6 +136,32 @@
       box.querySelector('[data-k=later]').onclick = function(){ try { localStorage.setItem('dt_keep_later', String(Date.now())); } catch (e) {} box.hidden = true; };
     } catch (e) { box.hidden = true; }
   }
+  /* 🔔 단톡방 앱 안에서만: 휴대폰 알림 주소를 서버(dt_push)에 맡깁니다. 웹에서는 아무것도 안 합니다.
+     처음 한 번 허락을 묻고, 그 뒤로는 하루에 한 번 주소를 새로 맞춥니다. 알림을 누르면 그 방으로. */
+  function isApp(){ try { return window.ALIAS_APP === 'dantok' || !!(window.AliasNative && AliasNative.appKind && AliasNative.appKind() === 'dantok'); } catch (e) { return false; } }
+  function PN(){ try { return isApp() && window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() && Capacitor.Plugins && Capacitor.Plugins.PushNotifications; } catch (e) { return null; } }
+  function pushToken(P){
+    return new Promise(function(res, rej){
+      var done = false, t = setTimeout(function(){ if (!done) { done = true; rej(new Error('timeout')); } }, 15000);
+      P.addListener('registration', function(x){ if (!done) { done = true; clearTimeout(t); res(x.value); } });
+      P.addListener('registrationError', function(e){ if (!done) { done = true; clearTimeout(t); rej(new Error(JSON.stringify(e))); } });
+      P.register();
+    });
+  }
+  async function pushSync(){
+    var P = PN(); if (!P) return;
+    var last = 0; try { last = +localStorage.getItem('dt_push_at') || 0; } catch (e) {}
+    if (Date.now() - last < 86400e3) return;
+    await ready();
+    var perm = await P.checkPermissions();
+    if (perm.receive !== 'granted') { perm = await P.requestPermissions(); if (perm.receive !== 'granted') return; }
+    var tk = await pushToken(P);
+    var r = await sb.rpc('dt_push_set', { p_token: tk, p_platform: (Capacitor.getPlatform && Capacitor.getPlatform()) || '' });
+    if (r.data && r.data.ok) { try { localStorage.setItem('dt_push_at', String(Date.now())); } catch (e) {} }
+  }
+  (function(){ var P = PN(); if (!P || window.__dtTap) return; window.__dtTap = true;
+    P.addListener('pushNotificationActionPerformed', function(a){ var d = (a && a.notification && a.notification.data) || {}; if (d.url && /^room\.html\?r=[0-9a-f-]{36}$/.test(d.url)) location.href = d.url; });
+    setTimeout(function(){ pushSync().catch(function(){}); }, 1500); })();
   window.DT = { sb: sb, URL0: URL0, $: $, esc: esc, toast: toast, errText: errText, ERR: ERR, ready: ready, rpc: rpc, av: av, initial: initial,
-                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl, keepSheet: keepSheet, restoreSheet: restoreSheet, keepBanner: keepBanner };
+                when: when, hm: hm, day: day, size: size, sheet: sheet, themeBtn: themeBtn, copy: copy, share: share, SITE: 'https://dantok.kr/', songs: songs, songUrl: songUrl, keepSheet: keepSheet, restoreSheet: restoreSheet, keepBanner: keepBanner, isApp: isApp, pushSync: pushSync };
 })();

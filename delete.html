@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<title>계정 삭제 — 단톡방</title>
+<meta name="theme-color" content="#1D3B5C">
+<link rel="icon" href="icon_192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="dt.css?v=20261117d">
+<style>.doc h2{ font-size:17px; margin:16px 0 4px; } .doc p, .doc li{ font-size:14.5px; color:var(--ink); margin:4px 0; } .doc ul{ padding-left:20px; margin:4px 0; }</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="dt.js?v=20261117f"></script>
+</head>
+<body>
+<div class="w">
+  <div class="top"><a class="logo" href="./"><img src="icon_192.png" alt="" style="width:34px;height:34px;border-radius:10px">단톡방</a></div>
+  <section class="card doc">
+    <h2 style="margin-top:0;font-size:20px">단톡방 계정 삭제</h2>
+<p>계정을 지우면 다음이 바로 지워지며 되돌릴 수 없습니다.</p>
+<ul><li>내가 있는 모든 방에서 나갑니다(방장이면 다음 사람에게 방장이 넘어가고, 혼자면 방이 닫힙니다).</li><li>내 갤러리(앨범 · 사진 · 동영상)와 프로필 사진이 지워집니다.</li><li>내가 방에 쓴 글은 「지워진 글」로 바뀝니다.</li><li>남은 이용권 기간은 돌려드리지 않습니다. 결제 기록은 법에 따라 5년 보관합니다.</li></ul>
+<p class="hint">다른 휴대폰에서 아이디로 쓰던 계정을 지우려면, 그 휴대폰에서 이 화면을 열거나 첫 화면 「다른 휴대폰에서 쓰던 방 가져오기」로 들어온 뒤 지워 주세요.</p>
+<div id="out"></div><p class="err" id="err" hidden></p>
+  </section>
+  <p class="foot"><a href="terms.html">이용약관</a> · <a href="privacy.html">개인정보처리방침</a> · <a href="delete.html">계정 삭제</a><br>
+    위브앱솔루션 · 대표 이미화 · 사업자등록번호 206-08-71754 · 통신판매업신고 2022-수원권선-1701<br>경기도 수원시 권선구 수성로47 10동 501호 · 010-9237-9042 · weapps.kr@gmail.com</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(async function(){
+  var $ = DT.$, s;
+  try { await DT.ready(); s = (await DT.sb.auth.getSession()).data.session; } catch (e) {}
+  if (!s) { $('out').innerHTML = '<p class="err">연결하지 못했어요. 잠시 뒤에 다시 열어 주세요.</p>'; return; }
+  $('out').innerHTML = '<label style="flex-direction:row;align-items:flex-start;gap:8px;color:var(--ink);font-size:15px"><input type="checkbox" id="ok" style="width:auto;margin-top:5px"> 위 내용을 확인했고, 계정을 지웁니다.</label>' +
+    '<button class="btn red" id="go" type="button" disabled style="margin-top:10px;width:100%">계정 지우기</button>';
+  $('ok').onchange = function(){ $('go').disabled = !this.checked; };
+  $('go').onclick = async function(){
+    this.disabled = true; this.textContent = '지우는 중…';
+    try {
+      var f = await DT.rpc('dt_forget_me'); if (!f.ok) throw new Error(f.error);
+      if (f.paths && f.paths.length) { try { await DT.sb.storage.from('dantok').remove(f.paths); } catch (x) {} }
+      s = (await DT.sb.auth.getSession()).data.session;
+      var r = await fetch(DT.URL0 + '/functions/v1/self-delete-account', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ reason: 'dantok' }) });
+      var d = {}; try { d = await r.json(); } catch (x) {}
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      await DT.sb.auth.signOut();
+      $('out').innerHTML = '<p><b>계정을 지웠습니다.</b> 그동안 단톡방을 써 주셔서 고맙습니다.</p>';
+    } catch (e) { $('err').textContent = '지우지 못했어요: ' + (e.message || e); $('err').hidden = false; this.disabled = false; this.textContent = '계정 지우기'; }
+  };
+})();
+</script>
+</body>
+</html>
