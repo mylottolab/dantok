@@ -128,11 +128,11 @@ function planBox(){
   var used = DT.size(ST.used), line = ST.paid
     ? '📦 갤러리 이용권 · ' + used + ' / ' + DT.size(ST.bytes) + ' · ' + new Date(ST.until).toLocaleDateString('ko-KR') + '까지 · 🎬 동영상 가능'
     : '무료 · 사진 ' + ST.count + ' / ' + ST.photos + '장 (' + used + ' / ' + DT.size(ST.bytes) + ') · 동영상은 이용권이 있어야 올려요';
-  return '<div class="card" style="gap:8px"><p style="margin:0;font-size:14px;color:var(--ink)">' + line + '</p><button class="btn sun" type="button" id="bPlan" style="padding:11px">📦 갤러리 늘리기 · 동영상 올리기</button></div>';
+  return '<div class="card" style="gap:8px"><p style="margin:0;font-size:14px;color:var(--ink)">' + line + '</p><p class="hint">내 갤러리는 <b>나만의 공간</b>이에요. 방 저장 공간과 따로 계산되고, 늘리는 비용도 갤러리 주인인 내가 내요. <a href="help.html#pay">이용료 안내</a></p><button class="btn sun" type="button" id="bPlan" style="padding:11px">📦 갤러리 늘리기 · 동영상 올리기</button></div>';
 }
 function plans(why){
   if (typeof why !== 'string') why = '';
-  DT.planSheet('📦 내 갤러리 늘리기', (why ? why + ' ' : '') + '무료는 사진 200장 · 500MB까지예요. 이용권이 있으면 장수 제한 없이 정한 용량까지 사진과 동영상(한 개 100MB까지)을 올려요. 돈은 갤러리 주인인 내가 내요.',
+  DT.planSheet('📦 내 갤러리 늘리기', (why ? why + ' ' : '') + '내 갤러리는 방 저장 공간과 따로예요. 이용권을 사도 방 공간은 그대로이고, 내 갤러리 공간만 늘어나요. 무료는 사진 200장 · 500MB까지예요. 이용권이 있으면 장수 제한 없이 정한 용량까지 사진과 동영상(한 개 100MB까지)을 올려요. 돈은 갤러리 주인인 내가 내요.',
     ['dantok_gal_5g', 'dantok_gal_15g'], null, async function(){ await status(); load(); });
 }
 

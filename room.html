@@ -640,7 +640,7 @@ function menu(){
     '<span class="sec">초대하기</span><div class="codebig">' + esc(R.code) + '</div>' +
     '<div class="row"><button class="btn sun" type="button" id="iShare">링크 보내기</button><button class="btn g" type="button" id="iQr">QR 보기</button></div>' +
     '<p class="hint">초대받은 사람은 전화번호 없이 코드나 링크로 들어와요. 공기계도 와이파이만 있으면 돼요.</p><div id="qr" hidden></div>' +
-    '<button class="btn g" type="button" id="iStars">⭐ 즐겨찾기 모아 보기</button>' +
+    '<div class="row"><button class="btn g" type="button" id="iStars">⭐ 즐겨찾기</button><a class="btn g" href="help.html">❓ 이용 안내</a></div>' +
     (R.owner ? '<span class="sec">방장 설정</span>' +
       '<label>방 이름<input id="oName" maxlength="30"></label><label>공지 (위에 늘 보여요)<textarea id="oNotice" maxlength="200" rows="2" placeholder="예) 이번 모임은 토요일 6시 · 회비 2만 원"></textarea></label>' +
       '<label>끝나는 날 (선택)<input id="oEnd" type="date"></label>' +
@@ -651,7 +651,8 @@ function menu(){
     '<div class="row"><button class="btn g" type="button" id="meSave">별명 저장</button><button class="btn g" type="button" id="meMute">' + (ME.muted ? '🔔 알림 켜기' : '🔕 알림 끄기') + '</button></div>' +
     '<span class="sec">저장 공간 · 이용 기간</span><div class="bar"><i style="width:' + pct + '%"></i></div>' +
     '<p class="hint">' + DT.size(R.used_bytes) + ' / ' + DT.size(R.quota_bytes) + ' 사용 · ' + (R.live ? new Date(R.until).toLocaleDateString('ko-KR') + '까지' : '이용 기간이 끝났어요') + (R.ends_on ? ' · 끝나는 날 ' + esc(R.ends_on) : '') + '</p>' +
-    (R.owner ? '<div class="row"><button class="btn sun" type="button" id="pRoom">📅 1년 연장 · 9,900원</button><button class="btn g" type="button" id="pStore">💾 +10GB · 7,900원</button></div>' : '<p class="hint">이용 기간 · 저장 공간은 방장이 늘릴 수 있어요.</p>') +
+    '<p class="hint">이 방 저장 공간은 <b>대화에 보낸</b> 사진 · 동영상 · 파일 · 음성 메시지만 계산해요. 각자의 갤러리는 따로 계산돼서 이 방 공간을 쓰지 않아요.</p>' +
+    (R.owner ? '<div class="row"><button class="btn sun" type="button" id="pRoom">📅 1년 연장 · 9,900원</button><button class="btn g" type="button" id="pStore">💾 +10GB · 7,900원</button></div><p class="hint">순서: 처음 30일 무료 → <b>1년 연장</b>(기본 3GB 포함) → 공간이 모자랄 때만 <b>+10GB 저장권</b>. 저장권은 공간만 늘리고 방 기간은 늘리지 않아요. <a href="help.html#pay">이용료 안내</a></p>' : '<p class="hint">이용 기간 · 방 저장 공간은 방장이 늘려요. 내 갤러리는 내가 따로 늘릴 수 있어요. <a href="help.html#pay">이용료 안내</a></p>') +
     '<button class="btn g" type="button" id="bKeep">📲 휴대폰 바꿀 때 (내 방 지키기)</button>' +
     '<button class="btn red" type="button" id="bLeave">방 나가기</button>');
   $('meNick').value = ME.nick;
@@ -661,8 +662,8 @@ function menu(){
   $('iShare').onclick = function(){ DT.share('단톡방 초대', '「' + R.name + '」 단톡방에 초대해요. 전화번호 없이 들어와요. 초대 코드 ' + R.code, link); };
   $('iQr').onclick = function(){ var q = $('qr'); q.hidden = !q.hidden; if (!q.hidden && !q.firstChild) { try { new QRCode(q, { text: link, width: 200, height: 200 }); } catch (e) { q.textContent = link; } } };
   $('iStars').onclick = function(){ s.close(); stars(); };
-  if ($('pRoom')) $('pRoom').onclick = function(){ s.close(); DT.planSheet('📅 방 이용 기간 늘리기', '지금 ' + (R.live ? new Date(R.until).toLocaleDateString('ko-KR') + '까지예요. 사면 그 날짜에서 1년이 더해져요.' : '이용 기간이 끝났어요. 사면 오늘부터 1년 동안 다시 써요.'), ['dantok_room_1y'], ROOM, function(){ loadRoom(); newer(); ping('room'); }); };
-  if ($('pStore')) $('pStore').onclick = function(){ s.close(); DT.planSheet('💾 방 저장 공간 늘리기', '지금 ' + DT.size(R.used_bytes) + ' / ' + DT.size(R.quota_bytes) + ' 쓰고 있어요. 사진 · 동영상이 많은 방이면 늘려 두세요.', ['dantok_room_10g'], ROOM, function(){ loadRoom(); }); };
+  if ($('pRoom')) $('pRoom').onclick = function(){ s.close(); DT.planSheet('📅 방 이용 기간 늘리기', '지금 ' + (R.live ? new Date(R.until).toLocaleDateString('ko-KR') + '까지예요. 사면 그 날짜에서 1년이 더해지고, 기본 저장 공간 3GB도 그대로 따라와요.' : '이용 기간이 끝났어요. 사면 오늘부터 1년 동안 다시 써요.'), ['dantok_room_1y'], ROOM, function(){ loadRoom(); newer(); ping('room'); }); };
+  if ($('pStore')) $('pStore').onclick = function(){ s.close(); DT.planSheet('💾 방 저장 공간 늘리기', '지금 ' + DT.size(R.used_bytes) + ' / ' + DT.size(R.quota_bytes) + ' 쓰고 있어요. 사면 1년 동안 10GB가 더해져요. 공간만 늘고 방 이용 기간은 늘지 않으니, 기간은 「1년 연장」으로 늘려 주세요. 갤러리는 각자 따로라 이 공간을 쓰지 않아요.', ['dantok_room_10g'], ROOM, function(){ loadRoom(); }); };
   $('bKeep').onclick = function(){ s.close(); DT.keepSheet && DT.keepSheet(); };
   if (R.owner) {
     $('oName').value = R.name; $('oNotice').value = R.notice || ''; $('oEnd').value = R.ends_on || '';
