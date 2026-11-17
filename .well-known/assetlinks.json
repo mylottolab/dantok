@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.weaveapp.dantok",
+    "sha256_cert_fingerprints": ["31:C4:1A:2E:71:FC:8F:1A:41:87:24:8F:44:24:60:80:96:40:C2:31:1A:65:2A:F7:E6:F9:A6:48:65:22:AC:9A"]
+  }
+}]
