@@ -560,7 +560,26 @@
     ["사진을 올리는 중이에요…", "Uploading photo…"],
     ["사진.jpg", "photo.jpg"],
     ["지금", "Now"],
-    ["방장이", "The host"]
+    ["방장이", "The host"],
+    ["🚪 새 첫 화면", "🚪 New first screen"],
+    ["문 모양 방 카드", "Door-shaped room cards"],
+    ["내 방마다 문 하나, 새 글이 있으면 등불이 켜짐, 방장 방에는 왕관, 기간 끝난 방은 회색", "One door per room; the lamp lights up for new posts, a crown marks rooms you host, expired rooms are grey"],
+    ["지금 할 일 띠", "To-do strip"],
+    ["새 글이 있는 방과 개수를 맨 위에", "Rooms with new posts and counts at the top"],
+    ["처음 설정 2단계", "2-step setup"],
+    ["첫 방 만들기·들어가기 → 내 방 지키기(아이디 정하기)", "Create or join a first room → keep my rooms (set an ID)"],
+    ["예전 첫 화면으로", "Old first screen"],
+    ["아래 「↩ 예전 첫 화면으로」로 언제든 돌아가기", "Go back anytime with “↩ Back to the old first screen” at the bottom"],
+    ["한국어 · English 단추", "Korean · English button"],
+    ["첫 화면 위쪽 단추로 언제든 언어 바꾸기, 휴대폰이 한국어가 아니면 처음부터 영어", "Switch language anytime with the button at the top of the first screen; English by default if the phone isn’t in Korean"],
+    ["2026년 11월 22일 기준 · 화면과 기능은 앱 업데이트에 따라 바뀔 수 있습니다.", "As of Nov 22, 2026 · screens and features may change with app updates."],
+    ["🚪 첫 화면", "🚪 First screen"],
+    ["은 문 모양 카드로 보여요. 새 글이 있으면", " appear as door cards. With new posts the"],
+    ["등불", "lamp"],
+    ["이 켜지고, 내가 방장인 방에는 👑, 기간이 끝난 방은 회색이에요.", " lights up; rooms you host show 👑 and expired rooms are grey."],
+    ["맨 위 띠가 새 글이 있는 방을 알려 주고, 처음에는 「첫 방 만들기 → 내 방 지키기」 2단계를 차례로 안내해요.", "The top strip shows rooms with new posts, and new users are guided through 2 steps: “Create a first room → Keep my rooms”."],
+    ["위쪽", "Use the top"],
+    ["단추로 영어 화면, 🌙 단추로 야간 화면. 예전 화면이 편하면 맨 아래 「↩ 예전 첫 화면으로」.", " button for English and 🌙 for night mode. Prefer the old screen? Use “↩ Back to the old first screen” at the bottom."]
   ];
   D.sort(function(a, b){ return b[0].length - a[0].length; });
   var HAS = /[가-힣]/;
