@@ -29,6 +29,9 @@
 .pic{ position:relative; flex:none; width:58px; height:58px; border-radius:22px; overflow:hidden; background:var(--tint); cursor:pointer; border:none; padding:0; }
 .pic img, .pic video{ width:100%; height:100%; object-fit:cover; display:block; }
 .pic .av{ width:58px !important; height:58px !important; border-radius:22px; font-size:24px; }
+.pic .play{ position:absolute; left:50%; top:50%; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; background:rgba(0,0,0,.55); box-shadow:0 0 0 2px rgba(255,255,255,.85); pointer-events:none; }
+.pic .play::after{ content:''; position:absolute; left:10px; top:7px; border-style:solid; border-width:6px 0 6px 9px; border-color:transparent transparent transparent #fff; }
+.pic .vph{ width:100%; height:100%; background:linear-gradient(135deg, var(--navy), var(--sky)); }
 .pic .vb{ position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.62); color:#fff; font-size:10.5px; font-weight:800; border-radius:7px; padding:1px 5px; }
 .tx{ flex:1; min-width:0; }
 .tx .nm{ display:flex; align-items:center; gap:6px; font-size:16px; font-weight:800; }
@@ -47,7 +50,7 @@
 .ed textarea{ min-height:120px; }
 .cnt{ text-align:right; font-size:12px; color:var(--sub); }
 </style>
-<script src="dantok_i18n.js?v=20261123b"></script>
+<script src="dantok_i18n.js?v=20261123c"></script>
 </head>
 <body>
 <header class="hd">
@@ -80,7 +83,8 @@ function sorted(){
   return mine.concat(rest);
 }
 function picHtml(x, i){
-  if (x.kind === 'video' && URLS[x.path]) return '<button class="pic" type="button" data-v="' + i + '"><video src="' + esc(URLS[x.path]) + '#t=0.1" muted playsinline preload="metadata" loop></video><span class="vb">▶ ' + (x.secs ? Math.round(x.secs) + '초' : '영상') + '</span></button>';
+  /* 영상은 목록에서 멈춘 그림(첫 장면)과 ▶ 세모만 — 눌렀을 때만 영상을 받아요(사용량 절약) */
+  if (x.kind === 'video') return '<button class="pic" type="button" data-v="' + i + '">' + (URLS[x.path + '.jpg'] ? '<img alt="" src="' + esc(URLS[x.path + '.jpg']) + '">' : '<div class="vph"></div>') + '<span class="play"></span>' + (x.secs ? '<span class="vb">' + Math.round(x.secs) + '초</span>' : '') + '</button>';
   if (x.kind === 'photo' && URLS[x.path]) return '<button class="pic" type="button" data-v="' + i + '"><img alt="" src="' + esc(URLS[x.path]) + '"></button>';
   return '<button class="pic" type="button" data-v="' + i + '">' + DT.av(x.nick, x.color, 58, x.avatar) + '</button>';
 }
@@ -89,7 +93,7 @@ async function load(){
   var d = await DT.rpc('dt_intro_list', { p_room: ROOM });
   if (!d || !d.ok) { $('main').innerHTML = '<p class="hint">' + (d && d.error === 'not_member' ? '이 방 사람만 볼 수 있어요.' : '지금은 불러올 수 없어요. 잠시 뒤 다시 열어 주세요.') + '</p>'; return; }
   ITEMS = d.items || [];
-  var paths = []; ITEMS.forEach(function(x){ if (x.path) paths.push(x.path); if (x.avatar && x.avatar.indexOf('p:') === 0) paths.push(x.avatar.slice(2)); });
+  var paths = []; ITEMS.forEach(function(x){ if (x.path) paths.push(x.kind === 'video' ? x.path + '.jpg' : x.path); if (x.avatar && x.avatar.indexOf('p:') === 0) paths.push(x.avatar.slice(2)); });
   await sign(paths);
   draw();
 }
@@ -113,19 +117,15 @@ function draw(){
   $('main').querySelectorAll('[data-v]').forEach(function(b){ b.onclick = function(){ view(ITEMS[+b.dataset.v]); }; });
   $('main').querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ var p = $('main').querySelector('[data-p="' + b.dataset.m + '"]'); var o = p.classList.toggle('open'); b.textContent = o ? '접기' : '더 보기'; }; });
   $('main').querySelectorAll('img.av[data-path]').forEach(function(im){ var u = URLS[im.dataset.path]; if (u) im.src = u; });
-  /* 영상 동그라미는 소리 없이 살짝 움직이게(화면에 보일 때만) */
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function(es){ es.forEach(function(en){ var v = en.target; if (en.isIntersecting) v.play().catch(function(){}); else v.pause(); }); }, { threshold: .4 });
-    $('main').querySelectorAll('.pic video').forEach(function(v){ io.observe(v); });
-  }
 }
 
 /* 크게 보기 — 영상은 소리 켜기를 고를 수 있게(처음엔 소리 없이, 이 휴대폰에 기억) */
-function view(x){
+async function view(x){
   if (!x) return;
+  if (x.kind === 'video' && x.path && !URLS[x.path]) await sign([x.path]);
   var url = x.path && URLS[x.path], snd = false; try { snd = localStorage.getItem('dt_intro_sound') === '1'; } catch (e) {}
   var v = document.createElement('div'); v.className = 'view';
-  var media = x.kind === 'video' && url ? '<video src="' + esc(url) + '" playsinline autoplay controls></video>'
+  var media = x.kind === 'video' && url ? '<video src="' + esc(url) + '"' + (URLS[x.path + '.jpg'] ? ' poster="' + esc(URLS[x.path + '.jpg']) + '"' : '') + ' playsinline autoplay controls></video>'
     : x.kind === 'photo' && url ? '<img alt="" src="' + esc(url) + '">'
     : '<div style="transform:scale(2.2);margin:40px">' + DT.av(x.nick, x.color, 80, x.avatar) + '</div>';
   v.innerHTML = '<div class="vb2">' + (x.kind === 'video' ? '<button type="button" id="vS"></button>' : '') + '<button type="button" id="vX" aria-label="닫기">✕</button></div>' + media +
@@ -155,6 +155,17 @@ function shrink(file){
     im.src = u;
   });
 }
+/* 영상 첫 장면(0.5초)을 작은 그림으로 — 목록에는 이 그림만 보여요 */
+function posterOf(file){
+  return new Promise(function(res){ var u = URL.createObjectURL(file), v = document.createElement('video'), done = false;
+    function fin(b){ if (done) return; done = true; URL.revokeObjectURL(u); res(b); }
+    v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+    v.onloadeddata = function(){ try { v.currentTime = Math.min(0.5, (v.duration || 1) / 2); } catch (e) { fin(null); } };
+    v.onseeked = function(){ try { var m = 360, w = v.videoWidth, h = v.videoHeight, k = Math.min(1, m / Math.max(w, h)); if (!w) return fin(null);
+      var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob(function(b){ fin(b); }, 'image/jpeg', .8); } catch (e) { fin(null); } };
+    v.onerror = function(){ fin(null); }; setTimeout(function(){ fin(null); }, 8000); v.src = u; v.load(); });
+}
 function secsOf(file){
   return new Promise(function(res){ var u = URL.createObjectURL(file), v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; var ok = false;
     function fin(s){ if (ok) return; ok = true; URL.revokeObjectURL(u); res(s); }
@@ -179,6 +190,7 @@ function edit(me){
   function cnt(){ q('eCnt').textContent = q('eTx').value.length + ' / 500'; } q('eTx').oninput = cnt; cnt();
   function pv(){
     var u = localUrl || (path && URLS[path]);
+    if (kind === 'video' && !localUrl && path) { q('ePv').innerHTML = '<span class="pic" style="width:100%;height:100%;border-radius:0">' + (URLS[path + '.jpg'] ? '<img alt="" src="' + esc(URLS[path + '.jpg']) + '">' : '<div class="vph"></div>') + '<span class="play"></span></span>'; q('eNo').hidden = false; return; }
     q('ePv').innerHTML = kind === 'video' && u ? '<video src="' + esc(u) + '" muted playsinline autoplay loop></video>' : kind === 'photo' && u ? '<img alt="" src="' + esc(u) + '">' : DT.av(me.nick, me.color, 96, me.avatar);
     var im = q('ePv').querySelector('img.av[data-path]'); if (im && URLS[im.dataset.path]) im.src = URLS[im.dataset.path];
     q('eNo').hidden = !kind;
@@ -193,7 +205,7 @@ function edit(me){
         var sc = await secsOf(f);
         if (sc < 0) { q('eErr').textContent = '이 영상은 열 수 없어요. 다른 영상으로 해 주세요.'; return; }
         if (sc > MAX_S + .5) { q('eErr').textContent = '영상이 ' + Math.round(sc) + '초예요. 20초 안쪽으로 해 주세요.'; return; }
-        pick = { blob: f, ext: /quicktime/.test(f.type) ? 'mov' : /webm/.test(f.type) ? 'webm' : 'mp4', type: f.type || 'video/mp4' }; secs = Math.round(sc * 10) / 10;
+        pick = { blob: f, ext: /quicktime/.test(f.type) ? 'mov' : /webm/.test(f.type) ? 'webm' : 'mp4', type: f.type || 'video/mp4', poster: await posterOf(f) }; secs = Math.round(sc * 10) / 10;
       } else {
         var b = await shrink(f); if (!b) { q('eErr').textContent = '이 사진은 열 수 없어요.'; return; }
         pick = { blob: b, ext: 'jpg', type: 'image/jpeg' }; secs = null;
@@ -216,10 +228,11 @@ function edit(me){
         newPath = ROOM + '/intro/' + u.id + '-' + Date.now() + '.' + pick.ext;
         var up = await DT.sb.storage.from('dantok').upload(newPath, pick.blob, { contentType: pick.type, upsert: false });
         if (up.error) throw up.error;
+        if (pick.poster) { try { await DT.sb.storage.from('dantok').upload(newPath + '.jpg', pick.poster, { contentType: 'image/jpeg', upsert: true }); } catch (e) {} }
       }
       var r = await DT.rpc('dt_intro_set', { p_room: ROOM, p_body: body, p_kind: kind, p_path: newPath, p_secs: kind === 'video' ? secs : null });
       if (!r || !r.ok) throw new Error((r && r.error) || 'save');
-      if (r.old) { try { await DT.sb.storage.from('dantok').remove([r.old]); } catch (e) {} }
+      if (r.old) { try { await DT.sb.storage.from('dantok').remove([r.old, r.old + '.jpg']); } catch (e) {} }
       s.close(); DT.toast('소개를 저장했어요 🙋'); await load();
     } catch (e) {
       btn.disabled = false; btn.textContent = '저장';
@@ -230,7 +243,7 @@ function edit(me){
   var dl = q('eDel');
   if (dl) dl.onclick = async function(){
     if (this.dataset.ok !== '1') { this.dataset.ok = '1'; this.textContent = '한 번 더 누르면 지워요'; return; }
-    try { var r = await DT.rpc('dt_intro_del', { p_room: ROOM }); if (r && r.old) { try { await DT.sb.storage.from('dantok').remove([r.old]); } catch (e) {} } s.close(); DT.toast('지웠어요.'); await load(); }
+    try { var r = await DT.rpc('dt_intro_del', { p_room: ROOM }); if (r && r.old) { try { await DT.sb.storage.from('dantok').remove([r.old, r.old + '.jpg']); } catch (e) {} } s.close(); DT.toast('지웠어요.'); await load(); }
     catch (e) { q('eErr').textContent = '지우지 못했어요.'; }
   };
 }
