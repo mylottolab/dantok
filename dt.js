@@ -151,13 +151,17 @@
   async function pushSync(){
     var P = PN(); if (!P) return;
     var last = 0; try { last = +localStorage.getItem('dt_push_at') || 0; } catch (e) {}
-    if (Date.now() - last < 86400e3) return;
+    var capsNow = ''; try { if (window.AliasNative && typeof AliasNative.caps === 'function') capsNow = String(AliasNative.caps() || ''); } catch (e) {}
+    var capsSaved = ''; try { capsSaved = localStorage.getItem('dt_push_caps') || ''; } catch (e) {}
+    if (Date.now() - last < 86400e3 && capsNow === capsSaved) return;   // 🔴 2026-11-22 새 앱으로 바뀌면 바로 다시 적음
     await ready();
     var perm = await P.checkPermissions();
     if (perm.receive !== 'granted') { perm = await P.requestPermissions(); if (perm.receive !== 'granted') return; }
     var tk = await pushToken(P);
-    var r = await sb.rpc('dt_push_set', { p_token: tk, p_platform: (Capacitor.getPlatform && Capacitor.getPlatform()) || '' });
-    if (r.data && r.data.ok) { try { localStorage.setItem('dt_push_at', String(Date.now())); } catch (e) {} }
+    /* 🔴 2026-11-22 — 새 앱이면(알림에서 바로 답장 qr1) 기기 종류에 붙여 적어 둡니다 */
+    var caps = ''; try { if (window.AliasNative && typeof AliasNative.caps === 'function') caps = String(AliasNative.caps() || ''); } catch (e) {}
+    var r = await sb.rpc('dt_push_set', { p_token: tk, p_platform: ((Capacitor.getPlatform && Capacitor.getPlatform()) || '') + (caps ? ':' + caps : '') });
+    if (r.data && r.data.ok) { try { localStorage.setItem('dt_push_at', String(Date.now())); localStorage.setItem('dt_push_caps', caps); } catch (e) {} }
   }
   (function(){ var P = PN(); if (!P || window.__dtTap) return; window.__dtTap = true;
     P.addListener('pushNotificationActionPerformed', function(a){ var d = (a && a.notification && a.notification.data) || {}; if (d.url && /^room\.html\?r=[0-9a-f-]{36}$/.test(d.url)) location.href = d.url; });
