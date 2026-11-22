@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<title>단톡방 DanTokBang — 번호 없는 모임</title>
+<meta name="description" content="전화번호 없이 모이는 단톡방. 내 번호를 알리지 않아도, 유심 없는 공기계도 와이파이만 있으면 참여합니다.">
+<meta name="theme-color" content="#1D3B5C">
+<link rel="icon" href="icon_192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json">
+<!-- 💬 단톡방 첫 화면: 내 방 · 방 만들기 · 초대 코드로 들어가기. ?j=초대코드 로 오면 바로 들어가기 카드.
+     서버는 가림 프로젝트(15_dantok_rooms.sql). 2026-11-17 1단계 문자방. -->
+<link rel="stylesheet" href="dt.css?v=20261117d">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="dt.js?v=20261122a"></script>
+<script src="aliascall_store.js?v=20261117"></script>
+<script src="aliascall_web_pay.js?v=20261117"></script>
+<script src="dt_pay.js?v=20261117e"></script>
+<style>
+.hero{ background:linear-gradient(135deg,var(--navy),var(--sky)); color:#fff; border-radius:22px; padding:22px 20px; display:flex; flex-direction:column; gap:8px; }
+.hero h1{ margin:0; font-size:24px; line-height:1.3; text-wrap:balance; } .hero p{ margin:0; opacity:.93; font-size:15px; }
+.pts{ display:grid; gap:8px; }
+.pts div{ display:flex; gap:10px; align-items:flex-start; background:var(--tint); border-radius:14px; padding:10px 12px; font-size:15px; }
+.pts b{ display:block; }
+.pts span.e{ font-size:22px; line-height:1.2; flex:none; }
+.rooms{ display:flex; flex-direction:column; }
+.room{ display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); text-decoration:none; color:var(--ink); }
+.room:last-child{ border-bottom:none; }
+.room .mid{ flex:1; min-width:0; }
+.room .nm{ font-weight:800; font-size:17px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.room .nm small{ color:var(--sub); font-weight:600; font-size:13.5px; margin-left:4px; }
+.room .pv{ color:var(--sub); font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.room .rt{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:12.5px; color:var(--sub); flex:none; }
+.ricon{ flex:none; width:46px; height:46px; border-radius:15px; background:var(--tint); display:inline-flex; align-items:center; justify-content:center; font-size:22px; }
+.joincard{ border-color:var(--sun); border-width:2px; }
+.code{ text-transform:uppercase; letter-spacing:4px; font-weight:900; text-align:center; font-size:22px; }
+
+/* 🚪 단톡방 새 첫 화면 시안 (2026-11-22) — 시그니처 = 방 문
+   ① 「지금 할 일」: 새 글이 있는 방 · 내 방 지키기
+   ② 내 방 = 문(새 글이 있으면 문 위 등에 불) · 방장은 👑 · 기간 끝난 방은 잠긴 문
+   ③ 처음 설정 2단계: 첫 방 만들기 · 들어가기 → 내 방 지키기(아이디) */
+.todo{ display:flex; align-items:center; gap:12px; background:var(--card); border:2px solid var(--sun); border-radius:18px; padding:14px 16px; text-decoration:none; color:var(--ink); cursor:pointer; }
+.todo i{ font-style:normal; font-size:28px; } .todo b{ display:block; font-size:17px; } .todo span span{ font-size:13.5px; color:var(--sub); } .todo em{ margin-left:auto; font-style:normal; font-weight:900; color:var(--sky); white-space:nowrap; }
+.doors{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px 12px; }
+.door{ position:relative; display:flex; flex-direction:column; align-items:center; text-decoration:none; color:var(--ink); min-width:0; padding-top:16px; }
+.door .lamp{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:44px; height:14px; border-radius:0 0 22px 22px; background:var(--line); }
+.door.lit .lamp{ background:var(--sun); box-shadow:0 6px 18px 4px rgba(242,165,65,.55); }
+.door .leaf{ width:100%; aspect-ratio:3/4; max-height:190px; border-radius:60px 60px 10px 10px; background:linear-gradient(160deg,var(--navy),var(--sky)); border:4px solid var(--card); outline:2px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:12px 10px; color:#fff; position:relative; }
+.door .leaf::after{ content:""; position:absolute; right:14px; top:55%; width:10px; height:10px; border-radius:50%; background:var(--sun); }
+.door.off .leaf{ background:linear-gradient(160deg,#6B7685,#8A95A3); }
+.door .plate{ background:rgba(255,255,255,.95); color:#15243A; border-radius:8px; padding:4px 10px; font-weight:900; font-size:15px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.door .sub{ font-size:12.5px; opacity:.9; text-align:center; line-height:1.4; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.door .badge{ position:absolute; top:4px; right:10px; z-index:1; }
+.door .pv{ margin-top:6px; font-size:13px; color:var(--sub); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.door.new .leaf{ background:transparent; border:3px dashed var(--line); outline:none; color:var(--sky); font-weight:900; font-size:16px; }
+.door.new .leaf::after{ display:none; }
+.door.new .leaf b{ font-size:40px; line-height:1; }
+.setup ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.setup li{ display:flex; gap:12px; align-items:flex-start; } .setup .k{ flex:none; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-weight:900; background:var(--tint); color:var(--sky); }
+.setup li.done .k{ background:#1F7A4C; color:#fff; } .setup .t{ flex:1; min-width:0; } .setup .t b{ display:block; font-size:15.5px; } .setup .t span{ font-size:13px; color:var(--sub); } .setup li.done .t b{ text-decoration:line-through; color:var(--sub); }
+.setup li .go{ flex:none; align-self:center; border:2px solid var(--sky); color:var(--sky); background:none; border-radius:999px; padding:7px 12px; font:inherit; font-size:13px; font-weight:900; cursor:pointer; white-space:nowrap; }
+.setup .bar{ height:8px; border-radius:4px; background:var(--line); overflow:hidden; } .setup .bar i{ display:block; height:100%; background:#1F7A4C; }
+.backold{ background:none; border:0; color:var(--sub); font:inherit; font-size:13px; text-decoration:underline; cursor:pointer; padding:8px; align-self:center; }
+.trybar{ background:var(--tint); border-radius:12px; padding:8px 12px; font-size:12.5px; color:var(--sub); text-align:center; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><span class="logo"><img src="icon_192.png" alt="" style="width:34px;height:34px;border-radius:10px">단톡방</span><span class="sp"></span><span id="themeHere"></span></div>
+  <div id="trybar" class="trybar" hidden></div>
+
+  <section class="card joincard" id="join" hidden></section>
+  <a class="todo" id="todo" hidden><i>💡</i><span><b id="todoT"></b><span id="todoS"></span></span><em>열기 ›</em></a>
+
+  <section class="hero" id="hero">
+    <h1>번호 없는 모임,<br>단톡방</h1>
+    <p>내 전화번호를 알리지 않고 모입니다. 초대 코드 하나면 끝.</p>
+  </section>
+
+  <section class="card" id="mine">
+    <h2>🚪 내 방</h2>
+    <div class="doors" id="rooms"><p class="hint">불러오는 중…</p></div>
+  </section>
+
+  <div class="row">
+    <button class="btn sun" id="bNew" type="button">＋ 방 만들기</button>
+    <button class="btn" id="bCode" type="button">🔑 초대 코드로 들어가기</button>
+  </div>
+
+  <section class="card setup" id="setup" hidden></section>
+
+  <section class="card" id="intro">
+    <div class="pts">
+      <div><span class="e">🙈</span><span><b>내 번호는 비밀</b>전화번호 · 메신저 아이디 없이 들어와요. 방 사람에게 번호가 보이지 않아요.</span></div>
+      <div><span class="e">📱</span><span><b>공기계도 OK</b>유심 없는 휴대폰 · 태블릿도 와이파이만 있으면 참여해요.</span></div>
+      <div><span class="e">🖼</span><span><b>사진 · 동영상 · 음원</b>모임 사진과 영상을 방 사람끼리만 나눠요.</span></div>
+      <div><span class="e">🛡</span><span><b>안심 장치</b>방장은 내보내기 · 공지, 누구나 신고 · 차단을 할 수 있어요.</span></div>
+    </div>
+  </section>
+
+  <button class="btn g" type="button" id="bRestore">📲 다른 휴대폰에서 쓰던 방 가져오기</button>
+  <button type="button" class="backold" id="backOld">↩ 예전 첫 화면으로</button>
+  <p class="foot"><a href="help.html">이용 안내</a> · <a href="features.html">📘 전체 기능 소개</a> · <a href="terms.html">이용약관</a> · <a href="privacy.html">개인정보처리방침</a> · <a href="delete.html">계정 삭제</a><br>위브앱솔루션 · 대표 이미화 · 사업자등록번호 206-08-71754 · 통신판매업신고 2022-수원권선-1701<br>경기도 수원시 권선구 수성로47 10동 501호 · weapps.kr@gmail.com</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="dantok_home_mode.js?v=20261122a"></script>
+<script>
+(function(){
+var $ = DT.$, esc = DT.esc;
+DT.themeBtn($('themeHere'));
+var NICK_KEY = 'dt_last_nick';
+function lastNick(){ try { return localStorage.getItem(NICK_KEY) || ''; } catch (e) { return ''; } }
+function keepNick(n){ try { localStorage.setItem(NICK_KEY, n); } catch (e) {} }
+function go(id){ location.href = 'room.html?r=' + encodeURIComponent(id); }
+
+try { if (/[?&]try=1/.test(location.search)) { localStorage.setItem('dantok_home_mode', 'new'); history.replaceState(null, '', 'home.html' + location.search.replace(/[?&]try=1/, '').replace(/^&/, '?')); } } catch (e) {}
+try { if (localStorage.getItem('dantok_home_mode') === 'new' && (window.DANTOK_HOME_ALL || 'classic') !== 'new') { $('trybar').hidden = false; $('trybar').textContent = '시험 중 — 이 폰만 새 첫 화면입니다'; } } catch (e) {}
+$('backOld').onclick = function(){ try { localStorage.setItem('dantok_home_mode', 'classic'); } catch (e) {} location.replace('index.html'); };
+
+async function loadRooms(){
+  var list;
+  try { list = await DT.rpc('dt_my'); } catch (e) { $('rooms').innerHTML = '<p class="err">' + esc(DT.errText(e)) + '</p>'; return; }
+  var joining = !$('join').hidden; $('hero').hidden = !!list.length || joining; $('intro').hidden = list.length > 0 || joining;
+  $('rooms').innerHTML = list.map(function(r){
+    var l = r.last || {}, pv = l.kind === 'system' ? (l.body || '') : l.kind === 'photo' ? '📷 사진' : l.kind === 'video' ? '🎬 동영상' : l.kind === 'audio' ? '🎵 음원' : l.kind === 'voice' ? '🎤 음성 메시지' : l.kind === 'file' ? '📎 파일' : (l.body == null ? '지워진 글' : l.body);
+    if (l.nick && l.kind !== 'system') pv = l.nick + ': ' + pv;
+    var lit = r.unread > 0 && r.live;
+    return '<a class="door' + (lit ? ' lit' : '') + (r.live ? '' : ' off') + '" href="room.html?r=' + encodeURIComponent(r.id) + '" aria-label="' + esc(r.name) + (r.unread ? ' 새 글 ' + r.unread : '') + '">' +
+      '<span class="lamp"></span>' + (r.unread ? '<span class="badge">' + (r.unread > 99 ? '99+' : r.unread) + '</span>' : '') +
+      '<span class="leaf"><span class="plate">' + (r.owner ? '👑 ' : '') + esc(r.name) + '</span><span class="sub">' + r.count + '명' + (r.muted ? ' · 🔕' : '') + (r.live ? '' : '<br>⏸ 기간 끝남') + '</span></span>' +
+      '<span class="pv">' + esc(r.live ? (l.t ? DT.when(l.t) + ' · ' : '') + pv : '이용권을 사면 다시 열려요') + '</span></a>';
+  }).join('') + '<a class="door new" href="javascript:void 0" id="dNew"><span class="lamp" style="visibility:hidden"></span><span class="leaf"><b>＋</b>새 방 만들기</span><span class="pv">초대 코드로 들어가기는 아래</span></a>';
+  $('dNew').onclick = function(){ $('bNew').click(); };
+
+  /* 지금 할 일: 새 글이 있는 방 */
+  var lit = list.filter(function(r){ return r.unread > 0 && r.live; }), td = $('todo');
+  if (lit.length) {
+    var n = lit.reduce(function(a, r){ return a + r.unread; }, 0);
+    td.hidden = false; td.href = 'room.html?r=' + encodeURIComponent(lit[0].id);
+    $('todoT').textContent = lit.length === 1 ? '「' + lit[0].name + '」에 새 글 ' + n + '개' : '새 글이 있는 방 ' + lit.length + '곳 (' + n + '개)';
+    $('todoS').textContent = lit.length === 1 ? '불이 켜진 문을 눌러 보세요' : '먼저 「' + lit[0].name + '」부터 열어요 · 불 켜진 문이 새 글 있는 방';
+  } else td.hidden = true;
+
+  /* 처음 설정 2단계: 첫 방 → 내 방 지키기(아이디) */
+  var u = null; try { u = await DT.ready(); } catch (e) {}
+  var kept = !!(u && u.email), has = list.length > 0, st = $('setup');
+  if (has && kept) { st.hidden = true; return; }
+  var n2 = (has ? 1 : 0) + (kept ? 1 : 0);
+  st.hidden = false;
+  st.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><h2>처음 설정 ' + n2 + ' / 2</h2></div><div class="bar"><i style="width:' + (n2 * 50) + '%"></i></div><ol>' +
+    '<li class="' + (has ? 'done' : '') + '"><span class="k">' + (has ? '✓' : '1') + '</span><span class="t"><b>첫 방 만들기 · 들어가기</b><span>방을 만들어 초대 코드를 보내거나, 받은 코드로 들어가요</span></span>' + (has ? '' : '<button class="go" type="button" id="s1">방 만들기</button>') + '</li>' +
+    '<li class="' + (kept ? 'done' : '') + '"><span class="k">' + (kept ? '✓' : '2') + '</span><span class="t"><b>내 방 지키기 (아이디 정하기)</b><span>휴대폰을 바꾸거나 앱을 지워도 내 방 · 갤러리 · 이용권이 그대로 와요</span></span>' + (kept ? '' : '<button class="go" type="button" id="s2">정하기</button>') + '</li></ol>';
+  if ($('s1')) $('s1').onclick = function(){ $('bNew').click(); };
+  if ($('s2')) $('s2').onclick = function(){ DT.keepSheet(function(){ loadRooms(); }); };
+}
+
+/* 방 만들기 */
+$('bNew').onclick = function(){
+  var s = DT.sheet('<h3>＋ 새 방 만들기</h3>' +
+    '<label>방 이름<input id="nName" maxlength="30" placeholder="예) 우리 가족 · 산악회 · 3반 학부모"></label>' +
+    '<label>이 방에서 쓸 내 별명<input id="nNick" maxlength="16" placeholder="예) 큰딸 · 총무 김"></label>' +
+    '<label>끝나는 날 (선택)<input id="nEnd" type="date"></label>' +
+    '<label>👑 방장 자리비움 기간 (일)<input id="nAway" type="number" inputmode="numeric" min="7" max="365" value="60"></label>' +
+    '<p class="hint">방장이 장기간 자리 비울 시 다른 분이 방장이 되도록 합니다. 방장 자리비움이 몇 일간 지속될 때 다른 사람이 「방장 맡기」를 누를 수 있게 할까요? 회원분들과 상의해서 입력하세요. (7~365일, 나중에 방장이 바꿀 수 있어요)</p>' +
+    '<p class="hint">여행 · 행사처럼 잠깐 쓰는 방이면 끝나는 날을 정하세요. 그날이 지나면 글을 더 쓸 수 없어요.</p>' +
+    '<p class="hint">처음 30일 무료예요. 그 뒤에는 방장이나 방 사람 누구나 이용권을 사면 계속 쓸 수 있어요.</p>' +
+    '<p class="err" id="nErr" hidden></p><button class="btn sun" id="nGo" type="button">방 만들기</button>');
+  $('nNick').value = lastNick();
+  var t = new Date(); $('nEnd').min = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  $('nName').focus();
+  $('nGo').onclick = async function(){
+    var b = this; b.disabled = true; $('nErr').hidden = true;
+    try {
+      var r = await DT.rpc('dt_create', { p_name: $('nName').value, p_nick: $('nNick').value, p_ends_on: $('nEnd').value || null, p_away_days: Math.round(+$('nAway').value || 60) });
+      if (!r.ok) throw r.error;
+      keepNick($('nNick').value.trim()); go(r.id);
+    } catch (e) { $('nErr').textContent = DT.errText(e); $('nErr').hidden = false; b.disabled = false; }
+  };
+};
+
+/* 초대 코드로 들어가기 */
+$('bCode').onclick = function(){
+  var s = DT.sheet('<h3>🔑 초대 코드로 들어가기</h3><label>초대 코드 6자리<input id="cCode" class="code" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC123"></label>' +
+    '<p class="err" id="cErr" hidden></p><button class="btn" id="cGo" type="button">다음</button>');
+  $('cCode').focus();
+  $('cGo').onclick = async function(){
+    var c = $('cCode').value.replace(/\s/g, '').toUpperCase();
+    if (c.length !== 6) { $('cErr').textContent = '코드 6자리를 넣어 주세요.'; $('cErr').hidden = false; return; }
+    s.close(); joinCard(c);
+  };
+};
+
+async function joinCard(code){
+  var box = $('join'); box.hidden = false; $('hero').hidden = true; $('intro').hidden = true; box.innerHTML = '<p>방을 찾는 중…</p>'; window.scrollTo(0, 0);
+  var p;
+  try { p = await DT.rpc('dt_peek', { p_code: code }); } catch (e) { box.innerHTML = '<p class="err">' + esc(DT.errText(e)) + '</p>'; return; }
+  if (!p.ok) { box.innerHTML = '<h2>🔑 초대</h2><p class="err">' + esc(DT.errText(p.error)) + '</p>'; return; }
+  if (p.joined) { go(p.id); return; }
+  box.innerHTML = '<h2>💬 「' + esc(p.name) + '」에 초대받았어요</h2><p>지금 ' + p.count + '명이 있어요. 전화번호는 필요 없어요.</p>' +
+    (p.full ? '<p class="err">방이 꽉 찼어요.</p>' : '<label>이 방에서 쓸 내 별명<input id="jNick" maxlength="16" placeholder="예) 엄마 · 김OO"></label><p class="err" id="jErr" hidden></p><button class="btn sun" id="jGo" type="button">들어가기</button>');
+  if (p.full) return;
+  $('jNick').value = lastNick();
+  $('jGo').onclick = async function(){
+    var b = this; b.disabled = true; $('jErr').hidden = true;
+    try { var r = await DT.rpc('dt_join', { p_code: code, p_nick: $('jNick').value }); if (!r.ok) throw r.error; keepNick($('jNick').value.trim()); go(r.id); }
+    catch (e) { $('jErr').textContent = DT.errText(e); $('jErr').hidden = false; b.disabled = false; }
+  };
+}
+
+$('bRestore').onclick = function(){ DT.restoreSheet(function(){ loadRooms(); }); };
+var q = new URLSearchParams(location.search), j = q.get('j');
+if (j) { history.replaceState(null, '', location.pathname); joinCard(j.toUpperCase()); }
+loadRooms();
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) loadRooms(); });
+})();
+</script>
+</body>
+</html>
