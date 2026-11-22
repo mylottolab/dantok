@@ -579,7 +579,49 @@
     ["이 켜지고, 내가 방장인 방에는 👑, 기간이 끝난 방은 회색이에요.", " lights up; rooms you host show 👑 and expired rooms are grey."],
     ["맨 위 띠가 새 글이 있는 방을 알려 주고, 처음에는 「첫 방 만들기 → 내 방 지키기」 2단계를 차례로 안내해요.", "The top strip shows rooms with new posts, and new users are guided through 2 steps: “Create a first room → Keep my rooms”."],
     ["위쪽", "Use the top"],
-    ["단추로 영어 화면, 🌙 단추로 야간 화면. 예전 화면이 편하면 맨 아래 「↩ 예전 첫 화면으로」.", " button for English and 🌙 for night mode. Prefer the old screen? Use “↩ Back to the old first screen” at the bottom."]
+    ["단추로 영어 화면, 🌙 단추로 야간 화면. 예전 화면이 편하면 맨 아래 「↩ 예전 첫 화면으로」.", " button for English and 🌙 for night mode. Prefer the old screen? Use “↩ Back to the old first screen” at the bottom."],
+    ["자기소개 — 단톡방", "Introductions — DanTok"],
+    ["🙋 자기소개 · 인사", "🙋 Introductions"],
+    ["🙋 자기소개 · 인사 보기", "🙋 See introductions"],
+    ["이 방 사람만 볼 수 있어요.", "Only people in this room can see this."],
+    ["지금은 불러올 수 없어요. 잠시 뒤 다시 열어 주세요.", "Can’t load right now. Please reopen shortly."],
+    ["지금은 불러올 수 없어요.", "Can’t load right now."],
+    ["들어온 순", "Joined"],
+    ["최근 소개 순", "Recent"],
+    ["이름순", "Name"],
+    ["👑 방장 먼저", "👑 Host first"],
+    ["내 소개 고치기", "Edit my intro"],
+    ["내 소개 쓰기", "Write my intro"],
+    ["사진이나 30초 영상을 넣고, 오른쪽에 인사 글을 써요", "Add a photo or a 30-second video, and write a greeting beside it"],
+    ["아직 소개를 안 썼어요. 위에서 써 보세요.", "You haven’t written one yet. Write it above."],
+    ["아직 소개가 없어요.", "No intro yet."],
+    ["더 보기", "More"],
+    ["접기", "Less"],
+    ["🔇 소리 켜기", "🔇 Sound on"],
+    ["🔊 소리 켜짐", "🔊 Sound is on"],
+    ["▶ 영상", "▶ Video"],
+    ["🙋 내 소개", "🙋 My intro"],
+    ["📷 사진 넣기", "📷 Add photo"],
+    ["🎬 영상 넣기 (30초)", "🎬 Add video (30s)"],
+    ["사진 · 영상 빼기", "Remove photo/video"],
+    ["인사 · 소개 글", "Greeting / intro"],
+    ["예) 안녕하세요, 3반 지민이 엄마예요. 잘 부탁드려요!", "e.g. Hi, I’m Jimin’s mom from class 3. Nice to meet you all!"],
+    ["이 방 사람만 볼 수 있어요. 처음 올리면 방에 「자기소개를 올렸어요」 알림이 한 줄 떠요.", "Only people in this room can see it. The first time you post, a one-line notice appears in the room."],
+    ["내 소개 지우기", "Delete my intro"],
+    ["소개를 저장했어요 🙋", "Intro saved 🙋"],
+    ["지우지 못했어요.", "Couldn’t delete."],
+    ["올리는 중…", "Uploading…"],
+    ["저장하는 중…", "Saving…"],
+    ["방을 찾을 수 없어요.", "Room not found."],
+    ["영상이 너무 커요(50MB까지). 더 짧게 찍어 주세요.", "The video is too large (max 50MB). Please record a shorter one."],
+    ["이 영상은 열 수 없어요. 다른 영상으로 해 주세요.", "This video can’t be opened. Please choose another."],
+    ["이 사진은 열 수 없어요.", "This photo can’t be opened."],
+    ["소개 글을 쓰거나 사진 · 영상을 넣어 주세요.", "Write an intro or add a photo/video."],
+    ["이 방 사람만 쓸 수 있어요.", "Only people in this room can post."],
+    ["영상은 30초까지예요.", "Videos can be up to 30 seconds."],
+    ["저장하지 못했어요. 인터넷을 확인하고 다시 해 주세요.", "Couldn’t save. Check your connection and try again."],
+    ["🙋 자기소개 · 인사: 방 안 ☰ → 「자기소개 · 인사 보기」. 사진이나 30초 영상 하나와 인사 글(500자)을 올리면 카톡처럼 줄지어 보여요. 위에서 들어온 순 · 최근 소개 순 · 이름순 · 방장 먼저로 줄 세워요.", "🙋 Introductions: in a room tap ☰ → “See introductions”. Post one photo or 30-second video plus a greeting (500 chars) and everyone appears in a list. Sort by joined, recent, name or host first."],
+    ["방 사람마다 사진이나 30초 영상 하나 + 인사 글. 카톡처럼 줄지어 보고, 들어온 순 · 최근 소개 순 · 이름순 · 방장 먼저로 줄 세우기", "One photo or 30-second video plus a greeting per member, shown as a list; sort by joined, recent, name or host first"]
   ];
   D.sort(function(a, b){ return b[0].length - a[0].length; });
   var HAS = /[가-힣]/;
@@ -590,7 +632,7 @@
   ];
   /* 한 줄을 통째로 바꿀 수 있을 때만 바꿉니다(손님 · 사장님이 쓴 글은 그대로 두려고) */
   var X = {"오전": "AM", "오후": "PM", "어제": "Yesterday", "요일": "", "방": "room", "값": "Price", "누가": "Who pays", "나": "Me", "사람": "People", "사진": "Photo", "음원": "Audio", "파일": "File", "유튜브": "YouTube", "신고": "Report", "차단": "Block", "기타": "Other", "다음": "Next", "개": "", "장": "", "명": "", "만": "only", "전에": "before", "까지": "until", "하루": "1 day", "일주일": "1 week", "1시간": "1 hour", "없어요.": "None.", "(나)": "(me)", "님)": ")"};
-  var RE = ([["^(.+)님이 입력 중…$", "$1 is typing…"], ["^(.+)님의 글$", "Post by $1"], ["^🚫 (.+)님 차단$", "🚫 Block $1"], ["^(.+)님 차단$", "Block $1"], ["^📺 (.+)님이 띄운 영상$", "📺 Video shared by $1"], ["^(.+)님이 띄운 영상$", "Video shared by $1"], ["^(.+)님을 내보냈어요\\.$", "$1 was removed."], ["^(.+)님이 새 방장이에요\\.$", "$1 is the new host."], ["^(.+)님의 갤러리$", "$1’s gallery"], ["^「(.+)」에 새 글 (\\d+)개$", "New posts in “$1”: $2"], ["^💬 「(.+)」에 초대받았어요$", "💬 You’re invited to “$1”"], ["^「(.+)」에 초대받았어요$", "You’re invited to “$1”"], ["^👑 (.+)님이 「방장 맡기」를 신청했어요\\. 방장님이 들어오셔서 신청이 곧 취소돼요\\.$", "👑 $1 asked to take over as host. The host is back, so the request will be cancelled."], ["^👑 (.+)님이 「방장 맡기」를 신청했어요\\. 방장이 (\\d+)일 안에 들어오지 않으면 방장이 바뀌어요\\.$", "👑 $1 asked to take over as host. If the host doesn’t return within $2 days, the host changes."], ["^(.+)에게 답장: (.*)$", "Reply to $1: $2"], ["^「(.+)」 단톡방에 초대해요\\. 전화번호 없이 들어와요\\. 초대 코드 (.*)$", "You’re invited to the “$1” DanTok room. Join without a phone number. Invite code $2"], ["^👑 방장이 (\\d+)일 넘게 자리를 비웠어요\\. 메뉴\\(☰\\)에서 「방장 맡기」를 할 수 있어요\\.$", "👑 The host has been away over $1 days. You can “Take over as host” from the menu (☰)."], ["^오전 (\\d+):(\\d\\d)$", "$1:$2 AM"], ["^오후 (\\d+):(\\d\\d)$", "$1:$2 PM"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 일요일$", "Sun, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 월요일$", "Mon, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 화요일$", "Tue, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 수요일$", "Wed, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 목요일$", "Thu, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 금요일$", "Fri, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 토요일$", "Sat, $1-$2-$3"], ["^(\\d+)월 (\\d+)일$", "$1/$2"], ["^사진 (\\d+)장 · 눌러서 모두 보기$", "$1 photos · tap to see all"]]).map(function(a){ return [new RegExp(a[0]), a[1]]; });
+  var RE = ([["^(.+)님이 입력 중…$", "$1 is typing…"], ["^(.+)님의 글$", "Post by $1"], ["^🚫 (.+)님 차단$", "🚫 Block $1"], ["^(.+)님 차단$", "Block $1"], ["^📺 (.+)님이 띄운 영상$", "📺 Video shared by $1"], ["^(.+)님이 띄운 영상$", "Video shared by $1"], ["^(.+)님을 내보냈어요\\.$", "$1 was removed."], ["^(.+)님이 새 방장이에요\\.$", "$1 is the new host."], ["^(.+)님의 갤러리$", "$1’s gallery"], ["^「(.+)」에 새 글 (\\d+)개$", "New posts in “$1”: $2"], ["^💬 「(.+)」에 초대받았어요$", "💬 You’re invited to “$1”"], ["^「(.+)」에 초대받았어요$", "You’re invited to “$1”"], ["^👑 (.+)님이 「방장 맡기」를 신청했어요\\. 방장님이 들어오셔서 신청이 곧 취소돼요\\.$", "👑 $1 asked to take over as host. The host is back, so the request will be cancelled."], ["^👑 (.+)님이 「방장 맡기」를 신청했어요\\. 방장이 (\\d+)일 안에 들어오지 않으면 방장이 바뀌어요\\.$", "👑 $1 asked to take over as host. If the host doesn’t return within $2 days, the host changes."], ["^(.+)에게 답장: (.*)$", "Reply to $1: $2"], ["^「(.+)」 단톡방에 초대해요\\. 전화번호 없이 들어와요\\. 초대 코드 (.*)$", "You’re invited to the “$1” DanTok room. Join without a phone number. Invite code $2"], ["^👑 방장이 (\\d+)일 넘게 자리를 비웠어요\\. 메뉴\\(☰\\)에서 「방장 맡기」를 할 수 있어요\\.$", "👑 The host has been away over $1 days. You can “Take over as host” from the menu (☰)."], ["^오전 (\\d+):(\\d\\d)$", "$1:$2 AM"], ["^오후 (\\d+):(\\d\\d)$", "$1:$2 PM"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 일요일$", "Sun, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 월요일$", "Mon, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 화요일$", "Tue, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 수요일$", "Wed, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 목요일$", "Thu, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 금요일$", "Fri, $1-$2-$3"], ["^(\\d{4})년 (\\d+)월 (\\d+)일 토요일$", "Sat, $1-$2-$3"], ["^(\\d+)월 (\\d+)일$", "$1/$2"], ["^사진 (\\d+)장 · 눌러서 모두 보기$", "$1 photos · tap to see all"], ["^(\\d+)명 · 소개 (\\d+)명$", "$1 members · $2 introduced"], ["^▶ (\\d+)초$", "▶ $1s"], ["^(\\d+)분 전$", "$1 min ago"], ["^(\\d+)시간 전$", "$1 h ago"], ["^(\\d+)일 전$", "$1 d ago"], ["^영상이 (\\d+)초예요\\. 30초 안쪽으로 해 주세요\\.$", "The video is $1 seconds. Please keep it under 30."], ["^(.+)님이 자기소개를 올렸어요 🙋$", "$1 posted an introduction 🙋"]]).map(function(a){ return [new RegExp(a[0]), a[1]]; });
   function tr(s){
     if (!s || !HAS.test(s)) return s;
     var k = s.trim(); if (X[k]) return s.replace(k, X[k]);

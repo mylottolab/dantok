@@ -128,7 +128,7 @@ body{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
 .songs button{ display:flex; gap:10px; align-items:center; text-align:left; border:none; border-bottom:1px solid var(--line); background:none; color:var(--ink); font:inherit; padding:10px 4px; cursor:pointer; }
 .songs button small{ color:var(--sub); }
 </style>
-<script src="dantok_i18n.js?v=20261122a"></script>
+<script src="dantok_i18n.js?v=20261123a"></script>
 </head>
 <body>
 <header class="hd">
@@ -640,6 +640,7 @@ function menu(){
         (R.owner ? '<button class="mini" type="button" data-act="own" data-u="' + m.uid + '">방장 넘기기</button><button class="mini red" type="button" data-act="kick" data-u="' + m.uid + '">내보내기</button>' : '<button class="mini" type="button" data-act="rep" data-u="' + m.uid + '">신고</button>')) + '</div>';
   }).join('');
   var s = DT.sheet('<h3>' + esc(R.name) + '</h3>' +
+    '<a class="btn sun" href="intro.html?r=' + encodeURIComponent(ROOM) + '" style="display:flex;justify-content:center;text-decoration:none">🙋 자기소개 · 인사 보기</a>' +
     '<span class="sec">초대하기</span><div class="codebig">' + esc(R.code) + '</div>' +
     '<div class="row"><button class="btn sun" type="button" id="iShare">링크 보내기</button><button class="btn g" type="button" id="iQr">QR 보기</button></div>' +
     '<p class="hint">초대받은 사람은 전화번호 없이 코드나 링크로 들어와요. 공기계도 와이파이만 있으면 돼요.</p><div id="qr" hidden></div>' +

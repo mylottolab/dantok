@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{var _t=localStorage.getItem("dt_theme");if(_t==="dark"||_t==="light")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<title>자기소개 — 단톡방</title>
+<meta name="theme-color" content="#1D3B5C">
+<link rel="icon" href="icon_192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json">
+<!-- 🙋 단톡방 자기소개 · 인사 (intro.html?r=방) — 2026-11-23
+     방 사람마다 소개 글(500자) + 사진 또는 짧은 영상(30초) 하나. 카톡처럼 왼쪽 동그라미 · 오른쪽 별명과 소개 글.
+     위에서 줄 세우기: 들어온 순 · 최근 소개 순 · 이름순. 서버: baroka/sql/29_dantok_intro.sql -->
+<link rel="stylesheet" href="dt.css?v=20261117d">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="dt.js?v=20261122a"></script>
+<style>
+.hd{ position:sticky; top:0; z-index:20; background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top, 0px) + 8px) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); display:flex; align-items:center; gap:10px; }
+.hd a, .hd button{ flex:none; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff; font-size:19px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; }
+.hd .tt{ flex:1; min-width:0; } .hd .tt b{ display:block; font-size:17.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hd .tt small{ opacity:.85; font-size:13px; }
+.w{ padding-top:12px; display:flex; flex-direction:column; gap:12px; }
+.sorts{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; } .sorts::-webkit-scrollbar{ display:none; }
+.sorts button{ flex:none; border:1.5px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:8px 14px; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.sorts button.on{ background:var(--navy); border-color:var(--navy); color:#fff; }
+.mine{ border:2px dashed var(--sun); background:var(--card); border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:12px; cursor:pointer; font:inherit; color:var(--ink); text-align:left; width:100%; }
+.mine b{ font-size:16px; } .mine small{ color:var(--sub); font-size:13px; display:block; margin-top:2px; }
+.list{ display:flex; flex-direction:column; }
+.it{ display:flex; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); align-items:flex-start; }
+.it:last-child{ border-bottom:none; }
+.pic{ position:relative; flex:none; width:58px; height:58px; border-radius:22px; overflow:hidden; background:var(--tint); cursor:pointer; border:none; padding:0; }
+.pic img, .pic video{ width:100%; height:100%; object-fit:cover; display:block; }
+.pic .av{ width:58px !important; height:58px !important; border-radius:22px; font-size:24px; }
+.pic .vb{ position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.62); color:#fff; font-size:10.5px; font-weight:800; border-radius:7px; padding:1px 5px; }
+.tx{ flex:1; min-width:0; }
+.tx .nm{ display:flex; align-items:center; gap:6px; font-size:16px; font-weight:800; }
+.tx .nm small{ font-size:12px; font-weight:600; color:var(--sub); margin-left:auto; white-space:nowrap; }
+.tx p{ margin:3px 0 0; font-size:14.5px; line-height:1.55; color:var(--ink); white-space:pre-wrap; word-break:break-word; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.tx p.open{ -webkit-line-clamp:unset; display:block; }
+.tx p.none{ color:var(--sub); font-style:italic; }
+.tx .more{ border:none; background:none; color:var(--sky); font:inherit; font-size:13px; font-weight:800; padding:2px 0; cursor:pointer; }
+.view{ position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.view img, .view video{ max-width:100%; max-height:76vh; }
+.view .vc{ color:#fff; padding:12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); font-size:15px; text-align:center; max-width:640px; white-space:pre-wrap; }
+.view .vb2{ position:absolute; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(env(safe-area-inset-right, 0px) + 10px); display:flex; gap:8px; }
+.view .vb2 button{ height:44px; min-width:44px; padding:0 14px; border-radius:22px; border:none; background:rgba(255,255,255,.16); color:#fff; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+.ed .pv{ width:96px; height:96px; border-radius:30px; overflow:hidden; background:var(--tint); display:flex; align-items:center; justify-content:center; flex:none; }
+.ed .pv img, .ed .pv video{ width:100%; height:100%; object-fit:cover; }
+.ed textarea{ min-height:120px; }
+.cnt{ text-align:right; font-size:12px; color:var(--sub); }
+</style>
+<script src="dantok_i18n.js?v=20261123a"></script>
+</head>
+<body>
+<header class="hd">
+  <a id="back" href="./" aria-label="뒤로">‹</a>
+  <div class="tt"><b>🙋 자기소개 · 인사</b><small id="sub"></small></div>
+</header>
+<div class="wrap w" id="main"><p class="hint">불러오는 중…</p></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+var $ = DT.$, esc = DT.esc, Q = new URLSearchParams(location.search), ROOM = Q.get('r');
+var ITEMS = [], URLS = {}, SORT = 'join', MAX_S = 30, MAX_B = 50 * 1024 * 1024;
+try { SORT = localStorage.getItem('dt_intro_sort') || 'join'; } catch (e) {}
+$('back').href = ROOM ? 'room.html?r=' + encodeURIComponent(ROOM) : './';
+
+async function sign(paths){
+  var need = paths.filter(function(p){ return p && !URLS[p]; });
+  if (need.length) { try { var r = await DT.sb.storage.from('dantok').createSignedUrls(need, 3600); (r.data || []).forEach(function(x){ if (x.signedUrl) URLS[x.path] = x.signedUrl; }); } catch (e) {} }
+}
+function ago(t){ if (!t) return ''; var s = (Date.now() - new Date(t).getTime()) / 1000;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + '분 전'; if (s < 86400) return Math.round(s / 3600) + '시간 전';
+  if (s < 86400 * 30) return Math.round(s / 86400) + '일 전'; return DT.when(t); }
+
+function sorted(){
+  var a = ITEMS.slice(), mine = a.filter(function(x){ return x.me; }), rest = a.filter(function(x){ return !x.me; });
+  if (SORT === 'new') rest.sort(function(x, y){ return (y.at ? new Date(y.at) : 0) - (x.at ? new Date(x.at) : 0); });
+  else if (SORT === 'name') rest.sort(function(x, y){ return String(x.nick).localeCompare(String(y.nick), 'ko'); });
+  else if (SORT === 'owner') rest.sort(function(x, y){ return (y.role === 'owner') - (x.role === 'owner') || new Date(x.joined_at) - new Date(y.joined_at); });
+  else rest.sort(function(x, y){ return new Date(x.joined_at) - new Date(y.joined_at); });
+  return mine.concat(rest);
+}
+function picHtml(x, i){
+  if (x.kind === 'video' && URLS[x.path]) return '<button class="pic" type="button" data-v="' + i + '"><video src="' + esc(URLS[x.path]) + '#t=0.1" muted playsinline preload="metadata" loop></video><span class="vb">▶ ' + (x.secs ? Math.round(x.secs) + '초' : '영상') + '</span></button>';
+  if (x.kind === 'photo' && URLS[x.path]) return '<button class="pic" type="button" data-v="' + i + '"><img alt="" src="' + esc(URLS[x.path]) + '"></button>';
+  return '<button class="pic" type="button" data-v="' + i + '">' + DT.av(x.nick, x.color, 58, x.avatar) + '</button>';
+}
+
+async function load(){
+  var d = await DT.rpc('dt_intro_list', { p_room: ROOM });
+  if (!d || !d.ok) { $('main').innerHTML = '<p class="hint">' + (d && d.error === 'not_member' ? '이 방 사람만 볼 수 있어요.' : '지금은 불러올 수 없어요. 잠시 뒤 다시 열어 주세요.') + '</p>'; return; }
+  ITEMS = d.items || [];
+  var paths = []; ITEMS.forEach(function(x){ if (x.path) paths.push(x.path); if (x.avatar && x.avatar.indexOf('p:') === 0) paths.push(x.avatar.slice(2)); });
+  await sign(paths);
+  draw();
+}
+function draw(){
+  var L = sorted(), me = ITEMS.filter(function(x){ return x.me; })[0] || {};
+  var done = ITEMS.filter(function(x){ return x.body || x.path; }).length;
+  $('sub').textContent = ITEMS.length + '명 · 소개 ' + done + '명';
+  var S = [['join', '들어온 순'], ['new', '최근 소개 순'], ['name', '이름순'], ['owner', '👑 방장 먼저']];
+  $('main').innerHTML =
+    '<div class="sorts" id="sorts">' + S.map(function(s){ return '<button type="button" data-s="' + s[0] + '" class="' + (SORT === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+    '<button class="mine" type="button" id="mine">' + (me.body || me.path ? '✏️' : '🙋') + '<span style="flex:1"><b>' + (me.body || me.path ? '내 소개 고치기' : '내 소개 쓰기') + '</b><small>사진이나 30초 영상을 넣고, 오른쪽에 인사 글을 써요</small></span>›</button>' +
+    '<div class="list">' + L.map(function(x){
+      var i = ITEMS.indexOf(x), has = x.body && x.body.trim();
+      return '<div class="it">' + picHtml(x, i) + '<div class="tx"><div class="nm"><span data-noi18n>' + esc(x.nick) + '</span>' + (x.role === 'owner' ? ' 👑' : '') + (x.me ? ' <span style="color:var(--sub);font-size:13px">(나)</span>' : '') +
+        '<small>' + (x.at ? ago(x.at) : '') + '</small></div>' +
+        '<p class="' + (has ? '' : 'none') + '" data-p="' + i + '"' + (has ? ' data-noi18n' : '') + '>' + (has ? esc(x.body) : (x.path ? '' : (x.me ? '아직 소개를 안 썼어요. 위에서 써 보세요.' : '아직 소개가 없어요.'))) + '</p>' +
+        (has && x.body.length > 70 ? '<button class="more" type="button" data-m="' + i + '">더 보기</button>' : '') + '</div></div>';
+    }).join('') + '</div>';
+  $('sorts').onclick = function(e){ var b = e.target.closest('[data-s]'); if (!b) return; SORT = b.dataset.s; try { localStorage.setItem('dt_intro_sort', SORT); } catch (er) {} draw(); };
+  $('mine').onclick = function(){ edit(me); };
+  $('main').querySelectorAll('[data-v]').forEach(function(b){ b.onclick = function(){ view(ITEMS[+b.dataset.v]); }; });
+  $('main').querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ var p = $('main').querySelector('[data-p="' + b.dataset.m + '"]'); var o = p.classList.toggle('open'); b.textContent = o ? '접기' : '더 보기'; }; });
+  $('main').querySelectorAll('img.av[data-path]').forEach(function(im){ var u = URLS[im.dataset.path]; if (u) im.src = u; });
+  /* 영상 동그라미는 소리 없이 살짝 움직이게(화면에 보일 때만) */
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(es){ es.forEach(function(en){ var v = en.target; if (en.isIntersecting) v.play().catch(function(){}); else v.pause(); }); }, { threshold: .4 });
+    $('main').querySelectorAll('.pic video').forEach(function(v){ io.observe(v); });
+  }
+}
+
+/* 크게 보기 — 영상은 소리 켜기를 고를 수 있게(처음엔 소리 없이, 이 휴대폰에 기억) */
+function view(x){
+  if (!x) return;
+  var url = x.path && URLS[x.path], snd = false; try { snd = localStorage.getItem('dt_intro_sound') === '1'; } catch (e) {}
+  var v = document.createElement('div'); v.className = 'view';
+  var media = x.kind === 'video' && url ? '<video src="' + esc(url) + '" playsinline autoplay controls></video>'
+    : x.kind === 'photo' && url ? '<img alt="" src="' + esc(url) + '">'
+    : '<div style="transform:scale(2.2);margin:40px">' + DT.av(x.nick, x.color, 80, x.avatar) + '</div>';
+  v.innerHTML = '<div class="vb2">' + (x.kind === 'video' ? '<button type="button" id="vS"></button>' : '') + '<button type="button" id="vX" aria-label="닫기">✕</button></div>' + media +
+    '<div class="vc" data-noi18n><b>' + esc(x.nick) + (x.role === 'owner' ? ' 👑' : '') + '</b>' + (x.body ? '<br>' + esc(x.body) : '') + '</div>';
+  document.body.appendChild(v);
+  var img = v.querySelector('img.av[data-path]'); if (img && URLS[img.dataset.path]) img.src = URLS[img.dataset.path];
+  function close(){ var vd = v.querySelector('video'); if (vd) vd.pause(); v.remove(); }
+  v.querySelector('#vX').onclick = close; v.onclick = function(e){ if (e.target === v) close(); };
+  var vd = v.querySelector('video');
+  if (vd) {
+    var sb = v.querySelector('#vS');
+    function paint(){ sb.textContent = vd.muted ? '🔇 소리 켜기' : '🔊 소리 켜짐'; }
+    vd.muted = !snd;
+    vd.play().catch(function(){ vd.muted = true; vd.play().catch(function(){}); paint(); });
+    sb.onclick = function(){ vd.muted = !vd.muted; try { localStorage.setItem('dt_intro_sound', vd.muted ? '0' : '1'); } catch (e) {} vd.play().catch(function(){}); paint(); };
+    vd.addEventListener('volumechange', paint); paint();
+  }
+}
+
+function shrink(file){
+  return new Promise(function(res){
+    var u = URL.createObjectURL(file), im = new Image();
+    im.onload = function(){ var m = 1280, w = im.naturalWidth, h = im.naturalHeight, k = Math.min(1, m / Math.max(w, h));
+      var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u); c.toBlob(function(b){ res(b); }, 'image/jpeg', .86); };
+    im.onerror = function(){ URL.revokeObjectURL(u); res(null); };
+    im.src = u;
+  });
+}
+function secsOf(file){
+  return new Promise(function(res){ var u = URL.createObjectURL(file), v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; var ok = false;
+    function fin(s){ if (ok) return; ok = true; URL.revokeObjectURL(u); res(s); }
+    v.onloadedmetadata = function(){ fin(isFinite(v.duration) ? v.duration : 0); }; v.onerror = function(){ fin(-1); }; setTimeout(function(){ fin(0); }, 8000); v.src = u; });
+}
+
+/* 내 소개 쓰기 · 고치기 */
+function edit(me){
+  var pick = null, kind = me.kind || null, path = me.path || null, secs = me.secs || null, localUrl = null;
+  var s = DT.sheet('<div class="ed" style="display:flex;flex-direction:column;gap:12px"><h3>🙋 내 소개</h3>' +
+    '<div style="display:flex;gap:14px;align-items:center"><div class="pv" id="ePv"></div><div style="display:flex;flex-direction:column;gap:8px;flex:1">' +
+      '<button class="btn g" type="button" id="ePh" style="padding:10px">📷 사진 넣기</button><button class="btn g" type="button" id="eVd" style="padding:10px">🎬 영상 넣기 (30초)</button>' +
+      '<button class="btn red" type="button" id="eNo" style="padding:8px">사진 · 영상 빼기</button></div></div>' +
+    '<label>인사 · 소개 글<textarea id="eTx" maxlength="500" placeholder="예) 안녕하세요, 3반 지민이 엄마예요. 잘 부탁드려요!"></textarea></label><div class="cnt" id="eCnt"></div>' +
+    '<p class="hint">이 방 사람만 볼 수 있어요. 처음 올리면 방에 「자기소개를 올렸어요」 알림이 한 줄 떠요.</p>' +
+    '<div id="eErr" class="hint" style="color:var(--red);font-weight:700"></div>' +
+    '<button class="btn sun" type="button" id="eSave">저장</button>' +
+    (me.body || me.path ? '<button class="btn red" type="button" id="eDel">내 소개 지우기</button>' : '') +
+    '<button class="btn g" type="button" id="eX">닫기</button></div>');
+  var el = s.el, q = function(id){ return el.querySelector('#' + id); };
+  q('eTx').value = me.body || '';
+  function cnt(){ q('eCnt').textContent = q('eTx').value.length + ' / 500'; } q('eTx').oninput = cnt; cnt();
+  function pv(){
+    var u = localUrl || (path && URLS[path]);
+    q('ePv').innerHTML = kind === 'video' && u ? '<video src="' + esc(u) + '" muted playsinline autoplay loop></video>' : kind === 'photo' && u ? '<img alt="" src="' + esc(u) + '">' : DT.av(me.nick, me.color, 96, me.avatar);
+    var im = q('ePv').querySelector('img.av[data-path]'); if (im && URLS[im.dataset.path]) im.src = URLS[im.dataset.path];
+    q('eNo').hidden = !kind;
+  }
+  pv();
+  function choose(accept, k){
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept;
+    inp.onchange = async function(){
+      var f = inp.files && inp.files[0]; if (!f) return; q('eErr').textContent = '';
+      if (k === 'video') {
+        if (f.size > MAX_B) { q('eErr').textContent = '영상이 너무 커요(50MB까지). 더 짧게 찍어 주세요.'; return; }
+        var sc = await secsOf(f);
+        if (sc < 0) { q('eErr').textContent = '이 영상은 열 수 없어요. 다른 영상으로 해 주세요.'; return; }
+        if (sc > MAX_S + .5) { q('eErr').textContent = '영상이 ' + Math.round(sc) + '초예요. 30초 안쪽으로 해 주세요.'; return; }
+        pick = { blob: f, ext: /quicktime/.test(f.type) ? 'mov' : /webm/.test(f.type) ? 'webm' : 'mp4', type: f.type || 'video/mp4' }; secs = Math.round(sc * 10) / 10;
+      } else {
+        var b = await shrink(f); if (!b) { q('eErr').textContent = '이 사진은 열 수 없어요.'; return; }
+        pick = { blob: b, ext: 'jpg', type: 'image/jpeg' }; secs = null;
+      }
+      kind = k; if (localUrl) URL.revokeObjectURL(localUrl); localUrl = URL.createObjectURL(pick.blob); pv();
+    };
+    inp.click();
+  }
+  q('ePh').onclick = function(){ choose('image/*', 'photo'); };
+  q('eVd').onclick = function(){ choose('video/*', 'video'); };
+  q('eNo').onclick = function(){ pick = null; kind = null; path = null; secs = null; localUrl = null; pv(); };
+  q('eX').onclick = s.close;
+  q('eSave').onclick = async function(){
+    var btn = this, body = q('eTx').value.trim();
+    if (!body && !kind) { q('eErr').textContent = '소개 글을 쓰거나 사진 · 영상을 넣어 주세요.'; return; }
+    btn.disabled = true; btn.textContent = pick ? '올리는 중…' : '저장하는 중…';
+    try {
+      var u = await DT.ready(), newPath = kind ? path : null;
+      if (pick) {
+        newPath = ROOM + '/intro/' + u.id + '-' + Date.now() + '.' + pick.ext;
+        var up = await DT.sb.storage.from('dantok').upload(newPath, pick.blob, { contentType: pick.type, upsert: false });
+        if (up.error) throw up.error;
+      }
+      var r = await DT.rpc('dt_intro_set', { p_room: ROOM, p_body: body, p_kind: kind, p_path: newPath, p_secs: kind === 'video' ? secs : null });
+      if (!r || !r.ok) throw new Error((r && r.error) || 'save');
+      if (r.old) { try { await DT.sb.storage.from('dantok').remove([r.old]); } catch (e) {} }
+      s.close(); DT.toast('소개를 저장했어요 🙋'); await load();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = '저장';
+      var m = String((e && (e.message || e.error)) || e);
+      q('eErr').textContent = /not_member/.test(m) ? '이 방 사람만 쓸 수 있어요.' : /too_long/.test(m) ? '영상은 30초까지예요.' : /empty/.test(m) ? '소개 글을 쓰거나 사진 · 영상을 넣어 주세요.' : '저장하지 못했어요. 인터넷을 확인하고 다시 해 주세요.';
+    }
+  };
+  var dl = q('eDel');
+  if (dl) dl.onclick = async function(){
+    if (this.dataset.ok !== '1') { this.dataset.ok = '1'; this.textContent = '한 번 더 누르면 지워요'; return; }
+    try { var r = await DT.rpc('dt_intro_del', { p_room: ROOM }); if (r && r.old) { try { await DT.sb.storage.from('dantok').remove([r.old]); } catch (e) {} } s.close(); DT.toast('지웠어요.'); await load(); }
+    catch (e) { q('eErr').textContent = '지우지 못했어요.'; }
+  };
+}
+
+(async function(){
+  if (!ROOM || !/^[0-9a-f-]{36}$/.test(ROOM)) { $('main').innerHTML = '<p class="hint">방을 찾을 수 없어요.</p>'; return; }
+  try { await DT.ready(); await load(); if (Q.get('edit') === '1') { var me = ITEMS.filter(function(x){ return x.me; })[0]; if (me) edit(me); } }
+  catch (e) { $('main').innerHTML = '<p class="hint">' + esc(DT.errText ? DT.errText(e) : '지금은 불러올 수 없어요.') + '</p>'; }
+})();
+})();
+</script>
+</body>
+</html>
