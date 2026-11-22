@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#1D3B5C">
 <link rel="icon" href="icon_192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json">
 <!-- 🙋 단톡방 자기소개 · 인사 (intro.html?r=방) — 2026-11-23
-     방 사람마다 소개 글(500자) + 사진 또는 짧은 영상(30초) 하나. 카톡처럼 왼쪽 동그라미 · 오른쪽 별명과 소개 글.
+     방 사람마다 소개 글(500자) + 사진 또는 짧은 영상(20초) 하나. 카톡처럼 왼쪽 동그라미 · 오른쪽 별명과 소개 글.
      위에서 줄 세우기: 들어온 순 · 최근 소개 순 · 이름순. 서버: baroka/sql/29_dantok_intro.sql -->
 <link rel="stylesheet" href="dt.css?v=20261117d">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -47,7 +47,7 @@
 .ed textarea{ min-height:120px; }
 .cnt{ text-align:right; font-size:12px; color:var(--sub); }
 </style>
-<script src="dantok_i18n.js?v=20261123a"></script>
+<script src="dantok_i18n.js?v=20261123b"></script>
 </head>
 <body>
 <header class="hd">
@@ -59,7 +59,7 @@
 <script>
 (function(){
 var $ = DT.$, esc = DT.esc, Q = new URLSearchParams(location.search), ROOM = Q.get('r');
-var ITEMS = [], URLS = {}, SORT = 'join', MAX_S = 30, MAX_B = 50 * 1024 * 1024;
+var ITEMS = [], URLS = {}, SORT = 'join', MAX_S = 20, MAX_B = 20 * 1024 * 1024;
 try { SORT = localStorage.getItem('dt_intro_sort') || 'join'; } catch (e) {}
 $('back').href = ROOM ? 'room.html?r=' + encodeURIComponent(ROOM) : './';
 
@@ -100,7 +100,7 @@ function draw(){
   var S = [['join', '들어온 순'], ['new', '최근 소개 순'], ['name', '이름순'], ['owner', '👑 방장 먼저']];
   $('main').innerHTML =
     '<div class="sorts" id="sorts">' + S.map(function(s){ return '<button type="button" data-s="' + s[0] + '" class="' + (SORT === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
-    '<button class="mine" type="button" id="mine">' + (me.body || me.path ? '✏️' : '🙋') + '<span style="flex:1"><b>' + (me.body || me.path ? '내 소개 고치기' : '내 소개 쓰기') + '</b><small>사진이나 30초 영상을 넣고, 오른쪽에 인사 글을 써요</small></span>›</button>' +
+    '<button class="mine" type="button" id="mine">' + (me.body || me.path ? '✏️' : '🙋') + '<span style="flex:1"><b>' + (me.body || me.path ? '내 소개 고치기' : '내 소개 쓰기') + '</b><small>사진이나 20초 영상을 넣고, 오른쪽에 인사 글을 써요</small></span>›</button>' +
     '<div class="list">' + L.map(function(x){
       var i = ITEMS.indexOf(x), has = x.body && x.body.trim();
       return '<div class="it">' + picHtml(x, i) + '<div class="tx"><div class="nm"><span data-noi18n>' + esc(x.nick) + '</span>' + (x.role === 'owner' ? ' 👑' : '') + (x.me ? ' <span style="color:var(--sub);font-size:13px">(나)</span>' : '') +
@@ -166,10 +166,10 @@ function edit(me){
   var pick = null, kind = me.kind || null, path = me.path || null, secs = me.secs || null, localUrl = null;
   var s = DT.sheet('<div class="ed" style="display:flex;flex-direction:column;gap:12px"><h3>🙋 내 소개</h3>' +
     '<div style="display:flex;gap:14px;align-items:center"><div class="pv" id="ePv"></div><div style="display:flex;flex-direction:column;gap:8px;flex:1">' +
-      '<button class="btn g" type="button" id="ePh" style="padding:10px">📷 사진 넣기</button><button class="btn g" type="button" id="eVd" style="padding:10px">🎬 영상 넣기 (30초)</button>' +
+      '<button class="btn g" type="button" id="ePh" style="padding:10px">📷 사진 넣기</button><button class="btn g" type="button" id="eVd" style="padding:10px">🎬 영상 넣기 (20초)</button>' +
       '<button class="btn red" type="button" id="eNo" style="padding:8px">사진 · 영상 빼기</button></div></div>' +
     '<label>인사 · 소개 글<textarea id="eTx" maxlength="500" placeholder="예) 안녕하세요, 3반 지민이 엄마예요. 잘 부탁드려요!"></textarea></label><div class="cnt" id="eCnt"></div>' +
-    '<p class="hint">이 방 사람만 볼 수 있어요. 처음 올리면 방에 「자기소개를 올렸어요」 알림이 한 줄 떠요.</p>' +
+    '<p class="hint">영상은 20초 · 20MB까지예요. 짧게, 화질은 「보통」으로 찍어 주세요.</p><p class="hint">이 방 사람만 볼 수 있어요. 처음 올리면 방에 「자기소개를 올렸어요」 알림이 한 줄 떠요.</p>' +
     '<div id="eErr" class="hint" style="color:var(--red);font-weight:700"></div>' +
     '<button class="btn sun" type="button" id="eSave">저장</button>' +
     (me.body || me.path ? '<button class="btn red" type="button" id="eDel">내 소개 지우기</button>' : '') +
@@ -189,10 +189,10 @@ function edit(me){
     inp.onchange = async function(){
       var f = inp.files && inp.files[0]; if (!f) return; q('eErr').textContent = '';
       if (k === 'video') {
-        if (f.size > MAX_B) { q('eErr').textContent = '영상이 너무 커요(50MB까지). 더 짧게 찍어 주세요.'; return; }
+        if (f.size > MAX_B) { q('eErr').textContent = '영상이 너무 커요(20MB까지). 더 짧게, 화질 「보통」으로 찍어 주세요.'; return; }
         var sc = await secsOf(f);
         if (sc < 0) { q('eErr').textContent = '이 영상은 열 수 없어요. 다른 영상으로 해 주세요.'; return; }
-        if (sc > MAX_S + .5) { q('eErr').textContent = '영상이 ' + Math.round(sc) + '초예요. 30초 안쪽으로 해 주세요.'; return; }
+        if (sc > MAX_S + .5) { q('eErr').textContent = '영상이 ' + Math.round(sc) + '초예요. 20초 안쪽으로 해 주세요.'; return; }
         pick = { blob: f, ext: /quicktime/.test(f.type) ? 'mov' : /webm/.test(f.type) ? 'webm' : 'mp4', type: f.type || 'video/mp4' }; secs = Math.round(sc * 10) / 10;
       } else {
         var b = await shrink(f); if (!b) { q('eErr').textContent = '이 사진은 열 수 없어요.'; return; }
@@ -224,7 +224,7 @@ function edit(me){
     } catch (e) {
       btn.disabled = false; btn.textContent = '저장';
       var m = String((e && (e.message || e.error)) || e);
-      q('eErr').textContent = /not_member/.test(m) ? '이 방 사람만 쓸 수 있어요.' : /too_long/.test(m) ? '영상은 30초까지예요.' : /empty/.test(m) ? '소개 글을 쓰거나 사진 · 영상을 넣어 주세요.' : '저장하지 못했어요. 인터넷을 확인하고 다시 해 주세요.';
+      q('eErr').textContent = /not_member/.test(m) ? '이 방 사람만 쓸 수 있어요.' : /too_long/.test(m) ? '영상은 20초까지예요.' : /empty/.test(m) ? '소개 글을 쓰거나 사진 · 영상을 넣어 주세요.' : '저장하지 못했어요. 인터넷을 확인하고 다시 해 주세요.';
     }
   };
   var dl = q('eDel');
