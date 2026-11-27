@@ -13,6 +13,7 @@
     too_big: '파일이 너무 커요(100MB까지).', path: '올리기에 실패했어요.', slow: '너무 빨리 보내고 있어요. 잠시 뒤에 보내 주세요.', not_owner: '방장만 할 수 있어요.',
     not_mine: '내 글만 지울 수 있어요.', away_days: '자리비움 기간은 7일에서 365일 사이로 정해 주세요.', claimed: '이미 다른 분이 방장 맡기를 신청했어요.', owner_here: '방장이 아직 자리를 비운 지 오래되지 않았어요.', bad_avatar: '이 사진은 쓸 수 없어요.', self: '나 자신은 내보낼 수 없어요.'
   };
+  try { setTimeout(function(){ sb.rpc('weave_log_access', { p_app: 'dantok' }).then(function(){}, function(){}); }, 2500); } catch (e) {}   /* 🛡 접속 기록(3개월 보관) — weave_safety.sql */
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var tt; function toast(m){ var t = $('toast'); if (!t) return; t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(function(){ t.classList.remove('on'); }, 2600); }
