@@ -658,7 +658,7 @@ function menu(){
     '<p class="hint">' + DT.size(R.used_bytes) + ' / ' + DT.size(R.quota_bytes) + ' 사용 · ' + (R.live ? new Date(R.until).toLocaleDateString('ko-KR') + '까지' : '이용 기간이 끝났어요') + (R.ends_on ? ' · 끝나는 날 ' + esc(R.ends_on) : '') + '</p>' +
     '<p class="hint">이 방 저장 공간은 <b>대화에 보낸</b> 사진 · 동영상 · 파일 · 음성 메시지만 계산해요. 각자의 갤러리는 따로 계산돼서 이 방 공간을 쓰지 않아요.</p>' +
     '<div class="row"><button class="btn sun" type="button" id="pRoom">📅 1년 연장 · 9,900원</button><button class="btn g" type="button" id="pStore">💾 +10GB · 7,900원</button></div>' +
-    '<p class="hint">순서: 처음 30일 무료 → <b>1년 연장</b>(기본 3GB 포함) → 공간이 모자랄 때만 <b>+10GB 저장권</b>. 저장권은 공간만 늘리고 방 기간은 늘리지 않아요. 연장 · 저장권은 <b>방 사람 누구나</b> 낼 수 있고, 방장이 바뀌어도 방에 그대로 남아요. <a href="help.html#pay">이용료 안내</a></p>' +
+    '<p class="hint">순서: 처음 7일 무료 → <b>1년 연장</b>(기본 3GB 포함) → 공간이 모자랄 때만 <b>+10GB 저장권</b>. 저장권은 공간만 늘리고 방 기간은 늘리지 않아요. 연장 · 저장권은 <b>방 사람 누구나</b> 낼 수 있고, 방장이 바뀌어도 방에 그대로 남아요. <a href="help.html#pay">이용료 안내</a></p>' +
     '<span class="sec">👑 방장</span><p class="hint">방장이 ' + R.away_days + '일 넘게 자리를 비우면 다른 분이 「방장 맡기」를 할 수 있어요. 신청하면 방에 알림이 뜨고, 방장이 7일 안에 들어오지 않으면 신청한 분이 방장이 돼요.' + (R.owner ? '' : ' 방장이 마지막으로 들어온 날: ' + (R.owner_seen ? new Date(R.owner_seen).toLocaleDateString('ko-KR') : '-')) + '</p>' +
     (R.can_claim ? '<button class="btn sun" type="button" id="bClaim">👑 방장 맡기</button>' : '') +
     '<button class="btn g" type="button" id="bKeep">📲 휴대폰 바꿀 때 (내 방 지키기)</button>' +

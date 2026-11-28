@@ -164,7 +164,7 @@ $('bNew').onclick = function(){
     '<label>👑 방장 자리비움 기간 (일)<input id="nAway" type="number" inputmode="numeric" min="7" max="365" value="60"></label>' +
     '<p class="hint">방장이 장기간 자리 비울 시 다른 분이 방장이 되도록 합니다. 방장 자리비움이 몇 일간 지속될 때 다른 사람이 「방장 맡기」를 누를 수 있게 할까요? 회원분들과 상의해서 입력하세요. (7~365일, 나중에 방장이 바꿀 수 있어요)</p>' +
     '<p class="hint">여행 · 행사처럼 잠깐 쓰는 방이면 끝나는 날을 정하세요. 그날이 지나면 글을 더 쓸 수 없어요.</p>' +
-    '<p class="hint">처음 30일 무료예요. 그 뒤에는 방장이나 방 사람 누구나 이용권을 사면 계속 쓸 수 있어요.</p>' +
+    '<p class="hint">처음 7일 무료예요. 그 뒤에는 방장이나 방 사람 누구나 이용권을 사면 계속 쓸 수 있어요.</p>' +
     '<p class="err" id="nErr" hidden></p><button class="btn sun" id="nGo" type="button">방 만들기</button>');
   $('nNick').value = lastNick();
   var t = new Date(); $('nEnd').min = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
